@@ -1,0 +1,79 @@
+CDC Ingestion
+1. RDS (1)
+- set up RDS
+- create python/SQl setup file
+
+2. Data generator
+- Goal: generate a function that queries RDS
+- generate a record of every CDC table (driver, vehicle, track)
+
+3. RDS (2)
+- use python to perform rds query
+
+4. debezium
+- set up debezium
+* keep in mind EC2 setup
+- connect RDS to debezium 
+
+5. kafka (1)
+- set up kafka
+* keep in mind EC2 setup
+- connect debezium to kafka
+
+6. Databricks (2)
+- connect kafka to datbricks
+- stream directly into silver layer
+
+7. test CDC
+- INSERT
+- UPDATE
+- DELETE
+
+
+---
+
+Batch Ingestion Minimum Viable Product
+1. Data generator
+- Goal: generate a function that generates n record(s) as parquet
+
+2. S3 (1)
+- post a single record (parquet) into S3 with python
+* note will need to move it manually into databricks for now because of free edition limits
+
+5. Databricks (2)
+- incremental process parquet into bronze delta table
+- incremental process paquet into silver delta table
+
+---
+
+Streaming Ingestion Minimum Viable Product (2)
+1. Data generator
+- Goal: generate a function that generates 1 record (session)
+* make function repeatable
+
+2. kafka (1)
+- gather one record and send into databricks
+
+3. Databricks (1)
+- poll data sent into databricks
+- trasform data: check for duplicate session, check FK
+
+4. S3 (1)
+- incrementally load session record directly into silver delta table
+
+5. Data generator + S3
+- Goal: generate a function that generates 1 record (telemetry)
+* make function repeatable
+* reduce the log generator to match the schema for telemetry
+
+6. kafka (2)
+- gather one record and send into databricks
+
+7. Databricks (1)
+- poll data sent into databricks
+- trasform data: check FK, duplicates (track missing times and current time)
+
+8. S3 (1)
+- incrementally load telemtry record directly into live
+
+
