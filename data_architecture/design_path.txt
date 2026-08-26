@@ -1,4 +1,10 @@
-CDC Ingestion
+CDC Ingestion Minimum Viable Product
+0. Pre-learning
+- RDS setup, commands, and python interaction
+- debezium setup and interactions
+- kafka setup and interactions
+- databricks 
+
 1. RDS (1)
 - set up RDS
 - create python/SQl setup file
@@ -22,7 +28,8 @@ CDC Ingestion
 
 6. Databricks (2)
 - connect kafka to datbricks
-- stream directly into silver layer
+- stream into bronze layer (track changes)
+- update silver layer (update state)
 
 7. test CDC
 - INSERT
