@@ -59,3 +59,30 @@ resource "aws_route_table_association" "public" {
     subnet_id      = aws_subnet.public.id
     route_table_id = aws_route_table.public.id
 }
+
+resource "aws_security_group" "ec2" {
+    name        = "motorsport-ec2-sg"
+    description = "Security group for data generators"
+    vpc_id      = aws_vpc.main.id
+
+    ingress {
+        description = "SSH from my IP"
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["${var.my_ip}/32"]
+    }
+    
+    egress {
+        description = "Allow all outbound"
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    tags = {
+        Project     = "motorsport"
+        Environment = "dev"
+    }
+}
