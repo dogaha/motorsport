@@ -25,3 +25,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "data_lake" {
         }
     }
 }
+
+resource "aws_s3_bucket_ownership_controls" "data_lake" {
+    bucket = aws_s3_bucket.data_lake.id
+
+    rule {
+        object_ownership = "BucketOwnerEnforced"
+    }
+}
