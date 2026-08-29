@@ -33,3 +33,18 @@ resource "aws_s3_bucket_ownership_controls" "data_lake" {
         object_ownership = "BucketOwnerEnforced"
     }
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "data_lake" {
+    bucket = aws_s3_bucket.data_lake.id
+
+    rule {
+        id      = "abort-incomplete-multipart-uploads"
+        status  = "Enabled"
+
+        filter {}
+
+        abort_incomplete_multipart_upload {
+            days_after_initiation = 7
+        }
+    }
+}
