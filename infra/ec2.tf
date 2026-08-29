@@ -9,7 +9,7 @@ resource "aws_key_pair" "main" {
 }
 
 resource "aws_instance" "main" {
-    ami                     = "ami-0d1f29d2140159d6d"
+    ami                     = "ami-0e508bdf5a1337e6b"
     instance_type           = "t3.micro"
     subnet_id               = aws_subnet.public.id
     vpc_security_group_ids  = [aws_security_group.ec2.id]
