@@ -108,3 +108,24 @@ resource "aws_security_group" "rds" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 }
+
+resource "aws_subnet" "private_b" {
+    vpc_id = aws_vpc.main.id
+    cidr_block = "10.0.3.0/24"
+    availability_zone = "us-east-2b"
+
+    tags = {
+        Project     = "motorsport"
+        Environment = "dev"
+    }
+}
+
+resource "aws_db_subnet_group" "motorsport" {
+    name = "motorsport-rds-subnet-group"
+    subnet_ids = [aws_subnet.private.id, aws_subnet.private_b.id]
+
+    tags = {
+        Project     = "motorsport"
+        Environment = "dev"
+    }
+}
