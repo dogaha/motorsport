@@ -36,13 +36,13 @@ resource "aws_db_parameter_group" "motorsport" {
     }
 }
 
-resouce "aws_db_instance" "motorsport" {
+resource "aws_db_instance" "motorsport" {
     identifier = "motorsport-postges"
     engine = "postgres"
     engine_version = "17.11"
 
     instance_class = "db.t4g.micro"
-    allocated_storrage = 20
+    allocated_storage = 20
     storage_type = "gp3"
 
     db_name = "motorsport_database"
@@ -52,4 +52,14 @@ resouce "aws_db_instance" "motorsport" {
     db_subnet_group_name = aws_db_subnet_group.motorsport.name
     vpc_security_group_ids = [aws_security_group.rds.id]
     parameter_group_name = aws_db_parameter_group.motorsport.name
+
+    publicly_accessible = false
+    multi_az = false
+
+    backup_retention_period = 1
+    backup_window = "04:00-05:00"
+
+    deletion_protection = true
+    skip_final_snapshot = false
+    final_snapshot_identifier = "motorsport-postgres-final-snapshot"
 }

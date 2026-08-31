@@ -120,7 +120,7 @@ resource "aws_subnet" "private_b" {
     }
 }
 
-resouce "aws_db_subnet_group" "motorsport" {
+resource "aws_db_subnet_group" "motorsport" {
     name = "motorsport-rds-subnet-group"
     subnet_ids = [aws_subnet.private.id, aws_subnet.private_b.id]
 
