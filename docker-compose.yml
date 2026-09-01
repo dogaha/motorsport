@@ -24,5 +24,19 @@ services:
       - kafka-data:/var/lib/kafka/data
     restart: unless-stopped
   
+  kafka-connect:
+    image: debezium/connect:latest
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+    ports: []
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: motorsport-connect-cluster
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+    restart: unless-stopped
+    
 volumes:
   kafka-data:
