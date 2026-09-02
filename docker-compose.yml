@@ -1,11 +1,11 @@
 services:
   # app is for local development only
-  app:
-    build: .
-    env_file:
-      - .env
-    volumes:
-      - .:/app
+  #app:
+  #  build: .
+  #  env_file:
+  #    - .env
+  #  volumes:
+  #    - .:/app
 
   kafka:
     image: apache/kafka:latest
