@@ -30,6 +30,12 @@ resource "aws_db_parameter_group" "motorsport" {
     name = "motorsport-postgres17"
     family = "postgres17"
 
+    parameter {
+        name = "rds.logical_replication"
+        value = "1"
+        apply_method = "pending-reboot"
+    }
+    
     tags = {
         Project     = "motorsport"
         Environment = "dev"
@@ -37,7 +43,7 @@ resource "aws_db_parameter_group" "motorsport" {
 }
 
 resource "aws_db_instance" "motorsport" {
-    identifier = "motorsport-postges"
+    identifier = "motorsport-postgres"
     engine = "postgres"
     engine_version = "17.11"
 
