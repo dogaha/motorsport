@@ -6,7 +6,7 @@ CREATE TABLE tracks (
     lap_length INT NOT NULL,
     start_coordinates POINT NOT NULL,
     end_coordinate POINT NOT NULL
-)
+);
 
 CREATE TABLE track_turns (
     turn_id SERIAL  PRIMARY KEY,
@@ -16,7 +16,7 @@ CREATE TABLE track_turns (
     coordinate POINT,
 
     UNIQUE (track_id, turn_number)
-)
+);
 
 CREATE TABLE drivers (
     driver_id SERIAL PRIMARY KEY,
@@ -24,7 +24,7 @@ CREATE TABLE drivers (
     last_name VARCHAR(20) NOT NULL,
     dob DATE,
     weight INT
-)
+);
 
 CREATE TABLE vehicles (
     vehicle_id SERIAL PRIMARY KEY,
@@ -49,4 +49,4 @@ CREATE TABLE vehicles (
     wheel_diameter INT,
     wheel_width INT,
     tires VARCHAR(20)
-)
+);

@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret" "rds_credentials" {
 resource "aws_secretsmanager_secret_version" "rds_credentials" {
     secret_id = aws_secretsmanager_secret.rds_credentials.id
     secret_string = jsonencode({
-        username    = "motortsport_master"
+        username    = "motorsport_master"
         password    = random_password.rds_master.result
         engine      = "postges"
         host        = aws_db_instance.motorsport.address
@@ -43,7 +43,7 @@ resource "aws_db_parameter_group" "motorsport" {
 }
 
 resource "aws_db_instance" "motorsport" {
-    identifier = "motorsport-postgres"
+    identifier = "motorsport-postges"
     engine = "postgres"
     engine_version = "17.11"
 

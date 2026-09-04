@@ -1,6 +1,7 @@
 # basics
 .env
 .log
+pastebin.txt
 
 # Terraform
 **/.terraform/*
