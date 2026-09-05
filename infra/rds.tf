@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret" "rds_credentials" {
 resource "aws_secretsmanager_secret_version" "rds_credentials" {
     secret_id = aws_secretsmanager_secret.rds_credentials.id
     secret_string = jsonencode({
-        username    = "motortsport_master"
+        username    = "motorsport_master"
         password    = random_password.rds_master.result
         engine      = "postges"
         host        = aws_db_instance.motorsport.address
@@ -30,6 +30,12 @@ resource "aws_db_parameter_group" "motorsport" {
     name = "motorsport-postgres17"
     family = "postgres17"
 
+    parameter {
+        name = "rds.logical_replication"
+        value = "1"
+        apply_method = "pending-reboot"
+    }
+    
     tags = {
         Project     = "motorsport"
         Environment = "dev"

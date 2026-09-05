@@ -1,11 +1,11 @@
 services:
   # app is for local development only
-  app:
-    build: .
-    env_file:
-      - .env
-    volumes:
-      - .:/app
+  #app:
+  #  build: .
+  #  env_file:
+  #    - .env
+  #  volumes:
+  #    - .:/app
 
   kafka:
     image: apache/kafka:latest
@@ -20,9 +20,32 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_HEAP_OPTS: "-Xmx400m -Xms400m"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     volumes:
       - kafka-data:/var/lib/kafka/data
     restart: unless-stopped
   
+  kafka-connect:
+    build:
+      context: .
+      dockerfile: dockerfile.connect
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+    ports: []
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_GROUP_ID: motorsport-connect-cluster
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+    restart: unless-stopped
+    
 volumes:
   kafka-data:
