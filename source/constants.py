@@ -1,7 +1,9 @@
-WRITE_HZ = 20
+LOG_HZ = 20
 LIVE_HZ = 5
-N = WRITE_HZ / LIVE_HZ
 SESSION_LENGTH_SEC = 60
+N = SESSION_LENGTH_SEC * LOG_HZ 
+NTH = LOG_HZ / LIVE_HZ
+
 LIVE_FIELDS = [
     "session_id",
     "timestamp",
@@ -54,7 +56,7 @@ LIVE_FIELDS = [
     "driver_respiratory_rate",
 ]
  
-LOGGED_FIELDS = [
+LOG_FIELDS = [
     "session_id",
     "timestamp",
     "throttle_position",
