@@ -141,3 +141,23 @@ LOG_FIELDS = [
 DRIVER_FIELDS= []
 
 TRACK_SUFFIXES = ["Speedway", "Raceway", "Circuit", "International Raceway", "Motorplex", "Grand Prix Course"]
+
+ENGINE_LAYOUT = ["Inline","V","Boxer"]
+FORCE_INDUCTION = ["Turbo","Supercharger","NA","Twin-Charged"]
+GEARBOX_TYPE = ["Manual","Automatic","Sequential"]
+MODIFY_VEHICLE= [
+    'horsepower',
+    'torque',
+    'redline',
+    'engine_layout',
+    'engine_displacement',
+    'force_induction',
+    'boost_pressure',
+    'gear_count',
+    'gearbox_type',
+    'drivetrain',
+    'wheel_diameter',
+    'wheel_width',
+    'wheel_weight',
+    'tires'
+]
