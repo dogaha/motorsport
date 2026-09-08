@@ -48,10 +48,30 @@ def new_track(conn):
 
     conn.commit()
     cur.close()
-    return
+    return track_id
 
-def new_driver():
-    return
+def new_driver(conn):
+    fake = Faker()
+    cur = conn.cursor()
+
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+    dob = fake.date_of_birth(minimum_age=18, maximum_age=80)
+    weight = random.randint(100,300)
+
+    cur.execute(
+        """
+        INSERT INTO drivers(first_name,last_name,dob,weight)
+        VALUES (%s,%s,%s,%s)
+        RETURN driver_id
+        """,
+        (first_name,last_name,dob,weight)
+    )
+    driver_id = cur.fetchone()[0]
+
+    conn.commit()
+    cur.close()
+    return driver_id
 
 def modify_vehicle():
     return
