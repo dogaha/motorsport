@@ -11,7 +11,7 @@ CREATE TABLE tracks (
 
 DROP TABLE IF EXISTS track_turns CASCADE;
 CREATE TABLE track_turns (
-    turn_id SERIAL PRIMARY KEY,
+    turn_id UUID PRIMARY KEY,
     turn_number INT NOT NULL,
     track_id INT NOT NULL REFERENCES tracks(track_id),
     turn_type VARCHAR(20),
@@ -37,8 +37,8 @@ CREATE TABLE vehicles (
     model VARCHAR(15),
     horsepower INT,
     torque INT,
-    readline INT,
-    engine_name VARCHAR(20),
+    redline INT,
+    engine_layout VARCHAR(20),
     engine_displacement INT,
     force_induction VARCHAR(15),
     boost_pressure INT,
@@ -52,6 +52,7 @@ CREATE TABLE vehicles (
     suspension VARCHAR(20),
     wheel_diameter INT,
     wheel_width INT,
+    wheel_weight INT,
     tires VARCHAR(20)
 );
 
