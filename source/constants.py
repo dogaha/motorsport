@@ -1,8 +1,5 @@
 LOG_HZ = 20
 LIVE_HZ = 5
-SESSION_LENGTH_SEC = 60
-N = SESSION_LENGTH_SEC * LOG_HZ 
-NTH = LOG_HZ / LIVE_HZ
 
 LIVE_FIELDS = [
     "session_id",
@@ -140,3 +137,7 @@ LOG_FIELDS = [
     "strain_rl_suspension",
     "strain_rr_suspension",
 ]
+
+DRIVER_FIELDS= []
+
+TRACK_SUFFIXES = ["Speedway", "Raceway", "Circuit", "International Raceway", "Motorplex", "Grand Prix Course"]
