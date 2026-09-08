@@ -151,6 +151,7 @@ MODIFY_VEHICLE= [
     'redline',
     'engine_layout',
     'engine_displacement',
+    'engine_cylinders'
     'force_induction',
     'boost_pressure',
     'gear_count',

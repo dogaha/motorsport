@@ -73,6 +73,33 @@ def new_driver(conn):
     cur.close()
     return driver_id
 
+def new_vehicle(conn):
+    fake = Faker()
+    cur = conn.cursor()
+
+    owner_id INT NOT NULL REFERENCES drivers(driver_id),
+    make, model = fake.vehicle_make_model().split(" ", 1)
+
+    horsepower = random.randint(150,900)
+    torque = random.randint(100,700)
+    redline = random.randrange(7000,11000,1000)
+    engine_layout = random.choice(constants.ENGINE_LAYOUT)
+    engine_displacement INT,
+    force_induction VARCHAR(15),
+    boost_pressure INT,
+    gear_count INT,
+    gearbox_type VARCHAR(10),
+    drivetrain VARCHAR(3),
+    length INT,
+    width INT,
+    height INT,
+    wheelbase INT,
+    suspension VARCHAR(20),
+    wheel_diameter INT,
+    wheel_width INT,
+    wheel_weight INT,
+    tires VARCHAR(20)
+
 def modify_vehicle():
     return
 

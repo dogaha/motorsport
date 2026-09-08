@@ -39,6 +39,7 @@ CREATE TABLE vehicles (
     torque INT,
     redline INT,
     engine_layout VARCHAR(20),
+    engine_cylinders INT,
     engine_displacement INT,
     force_induction VARCHAR(15),
     boost_pressure INT,
