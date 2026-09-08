@@ -11,7 +11,7 @@ CREATE TABLE tracks (
 
 DROP TABLE IF EXISTS track_turns CASCADE;
 CREATE TABLE track_turns (
-    turn_id UUID PRIMARY KEY,
+    turn_id SERIAL PRIMARY KEY,
     turn_number INT NOT NULL,
     track_id INT NOT NULL REFERENCES tracks(track_id),
     turn_type VARCHAR(20),
