@@ -161,3 +161,5 @@ MODIFY_VEHICLE= [
     'wheel_weight',
     'tires'
 ]
+
+TURN_TYPE = ["Hairpin","Carousel","Chicane","Corkscrew","Esses","Double Apex","Kink","Sweeper","90-Degree","Spoon","Snail"]
