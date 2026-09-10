@@ -2,7 +2,8 @@ import io
 import json
 import random
 import constants
-import psycopg2
+from psycopg2 import sql
+
 from faker import Faker
 
 # credentials
@@ -126,8 +127,43 @@ def new_vehicle(conn):
     cur.close()
     return vehicle_id
 
-def modify_vehicle():
-    return
+def modify_vehicle(conn):
+    fake = Faker()
+    cur = conn.cursor()
+    
+    force_induction = random.choice(constants.FORCE_INDUCTION)
+    gearbox_type = random.choice(constants.GEARBOX_TYPE)
+    wheel_diameter = random.randint(15, 22)
+
+    cur.execute("SELECT vehicle_id FROM vehicles ORDER BY RANDOM() LIMIT 1")
+    vehicle_id = cur.fetchone()[0]
+
+    car = {
+        "horsepower": random.randint(150, 900),
+        "torque": random.randint(100, 700),
+        "redline": random.randrange(7000, 11001, 1000),
+        "engine_layout": random.choice(constants.ENGINE_LAYOUT),
+        "engine_cylinders": random.randint(3, 8),
+        "engine_displacement": random.randrange(1500, 5001, 1000),
+        "force_induction": force_induction,
+        "boost_pressure": 0 if force_induction == "NA" else random.randint(5, 30),
+        "gearbox_type": gearbox_type,
+        "gear_count": random.randint(5, 6) if gearbox_type == "Manual" else random.randint(7, 10),
+        "drivetrain": random.choice(constants.DRIVETRAINS),
+        "wheel_diameter": wheel_diameter,
+        "wheel_width": random.randint(7, 13),
+        "wheel_weight": random.randint(12, 40),
+        "curb_weight": random.randint(2200, 4500),
+        "tires": f"{random.randint(160, 260)}/{random.randrange(40, 71, 5)}R{wheel_diameter}",
+    }
+
+    key = random.choice(list(car))
+    value = car[key]
+
+    cur.execute(
+        sql.SQL("UPDATE vehicles SET {} = %s WHERE vehicle_id = %s").format(sql.Identifier(key)),
+        (value, vehicle_id)
+    )
 
 
 if __name__ == "__main__":
