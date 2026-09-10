@@ -145,13 +145,14 @@ TRACK_SUFFIXES = ["Speedway", "Raceway", "Circuit", "International Raceway", "Mo
 ENGINE_LAYOUT = ["Inline","V","Boxer"]
 FORCE_INDUCTION = ["Turbo","Supercharger","NA","Twin-Charged"]
 GEARBOX_TYPE = ["Manual","Automatic","Sequential"]
+DRIVETRAINS = ["FWD","RWD","AWD"]
 MODIFY_VEHICLE= [
     'horsepower',
     'torque',
     'redline',
     'engine_layout',
     'engine_displacement',
-    'engine_cylinders'
+    'engine_cylinders',
     'force_induction',
     'boost_pressure',
     'gear_count',
@@ -160,6 +161,7 @@ MODIFY_VEHICLE= [
     'wheel_diameter',
     'wheel_width',
     'wheel_weight',
+    'curb_weight',
     'tires'
 ]
 

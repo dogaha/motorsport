@@ -63,7 +63,7 @@ def new_driver(conn):
         """
         INSERT INTO drivers(first_name,last_name,dob,weight)
         VALUES (%s,%s,%s,%s)
-        RETURN driver_id
+        RETURNING driver_id
         """,
         (first_name,last_name,dob,weight)
     )
@@ -77,28 +77,54 @@ def new_vehicle(conn):
     fake = Faker()
     cur = conn.cursor()
 
-    owner_id INT NOT NULL REFERENCES drivers(driver_id),
     make, model = fake.vehicle_make_model().split(" ", 1)
-
-    horsepower = random.randint(150,900)
-    torque = random.randint(100,700)
-    redline = random.randrange(7000,11000,1000)
+    horsepower = random.randint(150, 900)
+    torque = random.randint(100, 700)
+    redline = random.randrange(7000, 11001, 1000)
     engine_layout = random.choice(constants.ENGINE_LAYOUT)
-    engine_displacement INT,
-    force_induction VARCHAR(15),
-    boost_pressure INT,
-    gear_count INT,
-    gearbox_type VARCHAR(10),
-    drivetrain VARCHAR(3),
-    length INT,
-    width INT,
-    height INT,
-    wheelbase INT,
-    suspension VARCHAR(20),
-    wheel_diameter INT,
-    wheel_width INT,
-    wheel_weight INT,
-    tires VARCHAR(20)
+    engine_cylinders = random.randint(3, 8)
+    engine_displacement = random.randrange(1500, 5001, 1000)
+    force_induction = random.choice(constants.FORCE_INDUCTION)
+    boost_pressure = 0 if force_induction == "NA" else random.randint(5, 30)
+    gearbox_type = random.choice(constants.GEARBOX_TYPE)
+    gear_count = random.randint(5, 6) if gearbox_type == "Manual" else random.randint(7, 10)
+    drivetrain = random.choice(constants.DRIVETRAINS)
+    length = random.randint(310, 550)
+    width = random.randint(160, 200)
+    height = random.randint(140, 150)
+    wheelbase = random.randint(240, 280)
+    wheel_diameter = random.randint(15, 22)  # in
+    wheel_width = random.randint(7, 13)      # in
+    wheel_weight = random.randint(12, 40)    # lbs
+    curb_weight = random.randint(2200, 4500) # lbs -- placeholder range, your call
+    tires = f"{random.randint(160,260)}/{random.randrange(40,71,5)}R{wheel_diameter}"
+
+    cur.execute("SELECT driver_id FROM drivers ORDER BY RANDOM() LIMIT 1")
+    owner_id = cur.fetchone()[0]
+
+    cur.execute(
+        """
+        INSERT INTO vehicles (
+            owner_id, make, model, horsepower, torque, redline,
+            engine_layout, engine_cylinders, engine_displacement,
+            force_induction, boost_pressure, gearbox_type, gear_count,
+            drivetrain, length, width, height, wheelbase,
+            wheel_diameter, wheel_width, wheel_weight, curb_weight, tires
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING vehicle_id
+        """,
+        (owner_id, make, model, horsepower, torque, redline,
+         engine_layout, engine_cylinders, engine_displacement,
+         force_induction, boost_pressure, gearbox_type, gear_count,
+         drivetrain, length, width, height, wheelbase,
+         wheel_diameter, wheel_width, wheel_weight, curb_weight, tires)
+    )
+    vehicle_id = cur.fetchone()[0]
+
+    conn.commit()
+    cur.close()
+    return vehicle_id
 
 def modify_vehicle():
     return
