@@ -1,19 +1,27 @@
 import io
 import json
+import boto3
 import random
 import constants
-from psycopg2 import sql
-
+import psycopg2
 from faker import Faker
 
 # credentials
-def get_db_credentials(secret_name: str, region: str = "us-east-2") -> dict:
+def get_db_credentials(secret_name: str, region: str = "us-east-2"):
     client = boto3.client("secretsmanager", region_name=region)
     response = client.get_secret_value(SecretId=secret_name)
-    return json.loads(response["SecretString"])
+    creds = json.loads(response["SecretString"])
+    conn = psycopg2.connect(
+        host=creds["host"],
+        port=creds.get("port", "5432"),
+        dbname=creds["dbname"],
+        user=creds["username"],
+        password=creds["password"]
+    )
+    return conn
 
 # random generated data:
-def new_track(conn):
+def random_new_track(conn):
     fake = Faker()
     cur = conn.cursor()
 
@@ -51,7 +59,7 @@ def new_track(conn):
     cur.close()
     return track_id
 
-def new_driver(conn):
+def random_new_driver(conn):
     fake = Faker()
     cur = conn.cursor()
 
@@ -74,7 +82,7 @@ def new_driver(conn):
     cur.close()
     return driver_id
 
-def new_vehicle(conn):
+def random_new_vehicle(conn):
     fake = Faker()
     cur = conn.cursor()
 
@@ -127,7 +135,7 @@ def new_vehicle(conn):
     cur.close()
     return vehicle_id
 
-def modify_vehicle(conn):
+def random_modify_vehicle(conn):
     fake = Faker()
     cur = conn.cursor()
     
@@ -137,6 +145,9 @@ def modify_vehicle(conn):
 
     cur.execute("SELECT vehicle_id FROM vehicles ORDER BY RANDOM() LIMIT 1")
     vehicle_id = cur.fetchone()[0]
+
+    if not vehicle_id:
+        return None
 
     car = {
         "horsepower": random.randint(150, 900),
@@ -160,11 +171,22 @@ def modify_vehicle(conn):
     key = random.choice(list(car))
     value = car[key]
 
+    sql = psycopg2.sql
     cur.execute(
         sql.SQL("UPDATE vehicles SET {} = %s WHERE vehicle_id = %s").format(sql.Identifier(key)),
         (value, vehicle_id)
     )
 
+    return vehicle_id
+
 
 if __name__ == "__main__":
-    print("hello world")
+    SECRET_NAME = "motorsport/rds-credentials"
+    AWS_REGION = "us-east-2"
+    conn = get_db_credentials(SECRET_NAME, AWS_REGION)
+    new_track_id = random_new_track(conn)
+    new_driver_id = random_new_driver(conn)
+    new_vehicle_id = random_new_vehicle(conn)
+    edited_vehicle_id = random_modify_vehicle(conn)
+
+    conn.close()
