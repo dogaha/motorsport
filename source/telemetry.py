@@ -30,7 +30,7 @@ def buffer_data(data: dict) -> io.BytesIO:
 def batch_data(buffer: io.BytesIO,session_id:str):
     # send to S3
     s3 = boto3.client("s3")
-    #s3.upload_fileobj(buffer,"motorsport-data-lake",f"landing/{session_id}.parquet")
+    s3.upload_fileobj(buffer,"motorsport-data-lake",f"landing/{session_id}.parquet")
     # reclaim memory
     buffer.close()
     return
