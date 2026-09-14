@@ -40,7 +40,7 @@ def random_new_track(conn):
         """,
         (name,state,city,lap_length,start_coordinates,end_coordinate)
     )
-    track_id = cur.fetchone([0])
+    track_id = cur.fetchone()[0]
 
     for i in range(0,random.randint(25,75)):
         turn_number = i
