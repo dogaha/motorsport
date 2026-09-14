@@ -185,7 +185,7 @@ def random_modify_vehicle(conn):
 
 
 if __name__ == "__main__":
-    SECRET_NAME = "motorsport/rds-credentials"
+    SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
     new_track_id = random_new_track(conn)
