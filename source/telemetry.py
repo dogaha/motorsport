@@ -6,6 +6,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 from . import constants
+from kafka_producer import get_producer, send_record
 
 # Generate Data Logged
 def generate_session_data(session_id:str,n:int) -> dict:
@@ -18,6 +19,7 @@ def generate_session_data(session_id:str,n:int) -> dict:
                 data[field] = np.arange(0,n/constants.LOG_HZ,1/constants.LOG_HZ)
             case _:
                 data[field] = np.random.uniform(0,100, size=n)
+    print("Finish Data Generation")
     return data
 
 # save data to memeory
@@ -35,6 +37,7 @@ def batch_data(buffer: io.BytesIO,session_id:str):
 
     # reclaim memory
     buffer.close()
+    print("Finished Loading Into S3")
     return
 
 # Stream Live data
@@ -45,8 +48,9 @@ def stream_data(data:dict,n:int,nth:int):
         }
 
         # Push into kafka
-        print(record)
+        # print(record)
         time.sleep(1/constants.LIVE_HZ)
+    print("Finish Streaming Data")
         
 if __name__ == "__main__":
     session_id = str(uuid.uuid4()) 

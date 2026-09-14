@@ -3,4 +3,5 @@ pandas
 faker
 python-dotenv
 pyarrow
-psycopg2
+psycopg2-binary
+kafka-python
