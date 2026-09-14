@@ -49,7 +49,7 @@ def random_new_track(conn):
 
         cur.execute(
             """
-            INSERT INTO track_turns (turn_number,track_id,turn_type,coordinate)
+            INSERT INTO track_turns (turn_number,track_id,turn_type,coordinates)
             VALUES(%s,%s,%s,%s)
             """,
             (turn_number,track_id,turn_type,coordinate)
