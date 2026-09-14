@@ -2,7 +2,7 @@ import io
 import json
 import boto3
 import random
-import constants
+from . import constants
 import psycopg2
 from faker import Faker
 
@@ -57,6 +57,7 @@ def random_new_track(conn):
 
     conn.commit()
     cur.close()
+    print("Inserted Random Track Record and Track Turns Records")
     return track_id
 
 def random_new_driver(conn):
@@ -80,6 +81,7 @@ def random_new_driver(conn):
 
     conn.commit()
     cur.close()
+    print("Inserted Random Driver Record")
     return driver_id
 
 def random_new_vehicle(conn):
@@ -133,6 +135,7 @@ def random_new_vehicle(conn):
 
     conn.commit()
     cur.close()
+    print("Inserted Random Vehicle")
     return vehicle_id
 
 def random_modify_vehicle(conn):
@@ -177,6 +180,7 @@ def random_modify_vehicle(conn):
         (value, vehicle_id)
     )
 
+    print("Modfied Random Vehicle")
     return vehicle_id
 
 
