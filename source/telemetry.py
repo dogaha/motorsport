@@ -1,12 +1,13 @@
 import io
 import uuid
 import time
+import json
 import boto3
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 from . import constants
-from kafka_producer import get_producer, send_record
+from confluent_kafka import Producer
 
 # Generate Data Logged
 def generate_session_data(session_id:str,n:int) -> dict:
@@ -42,14 +43,29 @@ def batch_data(buffer: io.BytesIO,session_id:str):
 
 # Stream Live data
 def stream_data(data:dict,n:int,nth:int):
+    # producer
+    producer = Producer({
+        "bootstrap.servers":"localhost:9092"
+    })
+    
     for i in range(0,n,nth):
         record = {
-            field : data[field][i] for field in constants.LIVE_FIELDS
+            field: (
+                data[field][i].item()
+                if isinstance(data[field][i], np.generic)
+                else data[field][i]
+            )
+            for field in constants.LIVE_FIELDS
         }
 
         # Push into kafka
-        # print(record)
+        producer.produce(
+            "telemetry",
+            value=json.dumps(record).encode("utf-8")
+        )
+        producer.poll(0)
         time.sleep(1/constants.LIVE_HZ)
+    producer.flush()
     print("Finish Streaming Data")
         
 if __name__ == "__main__":

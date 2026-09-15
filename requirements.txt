@@ -4,5 +4,5 @@ faker
 python-dotenv
 pyarrow
 psycopg2-binary
-kafka-python
+confluent-kafka
 faker_vehicle
