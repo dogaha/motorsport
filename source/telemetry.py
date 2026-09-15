@@ -45,7 +45,7 @@ def batch_data(buffer: io.BytesIO,session_id:str):
 def stream_data(data:dict,n:int,nth:int):
     # producer
     producer = Producer({
-        "bootstrap.servers":"localhost:9092"
+        "bootstrap.servers":"kafka:9092"
     })
     
     for i in range(0,n,nth):
