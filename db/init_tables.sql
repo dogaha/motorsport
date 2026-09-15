@@ -1,12 +1,12 @@
 DROP TABLE IF EXISTS tracks CASCADE;
 CREATE TABLE tracks (
     track_id SERIAL PRIMARY KEY,
-    name VARCHAR(20) NOT NULL,
+    name VARCHAR(50) NOT NULL,
     state VARCHAR(20) NOT NULL,
     city VARCHAR(20) NOT NULL,
     lap_length INT NOT NULL,
     start_coordinates POINT NOT NULL,
-    end_coordinate POINT NOT NULL
+    end_coordinates POINT NOT NULL
 );
 
 DROP TABLE IF EXISTS track_turns CASCADE;

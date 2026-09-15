@@ -48,7 +48,7 @@ resource "aws_db_instance" "motorsport" {
     engine_version = "17.11"
 
     instance_class = "db.t4g.micro"
-    allocated_storage = 20
+    allocated_storage = 50
     storage_type = "gp3"
 
     db_name = "motorsport_database"
