@@ -5,6 +5,7 @@ import random
 from . import constants
 import psycopg2
 from faker import Faker
+from faker_vehicle import VehicleProvider
 
 # credentials
 def get_db_credentials(secret_name: str, region: str = "us-east-2"):
@@ -86,6 +87,7 @@ def random_new_driver(conn):
 
 def random_new_vehicle(conn):
     fake = Faker()
+    fake.add_provider(VehicleProvider)
     cur = conn.cursor()
 
     make, model = fake.vehicle_make_model().split(" ", 1)
