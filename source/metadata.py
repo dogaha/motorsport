@@ -4,6 +4,7 @@ import boto3
 import random
 from . import constants
 import psycopg2
+from psycopg2 import sql
 from faker import Faker
 from faker_vehicle import VehicleProvider
 
@@ -176,7 +177,6 @@ def random_modify_vehicle(conn):
     key = random.choice(list(car))
     value = car[key]
 
-    sql = psycopg2.sql
     cur.execute(
         sql.SQL("UPDATE vehicles SET {} = %s WHERE vehicle_id = %s").format(sql.Identifier(key)),
         (value, vehicle_id)
