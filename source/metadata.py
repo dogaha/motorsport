@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     try:
         functions = [random_new_track,random_new_driver,random_new_vehicle,random_modify_vehicle]
-        weights = [10, 10, 10, 70]
+        weights = [10, 15, 15, 60]
         while True:
             function = random.choices(functions, weights=weights, k=1)[0]
             function(conn)
