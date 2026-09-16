@@ -3,11 +3,62 @@ import uuid
 import time
 import json
 import boto3
+import random
+import psycopg2
+from psycopg2 import sql
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 from . import constants
 from confluent_kafka import Producer
+
+
+# credentials
+def get_db_credentials(secret_name: str, region: str = "us-east-2"):
+    client = boto3.client("secretsmanager", region_name=region)
+    response = client.get_secret_value(SecretId=secret_name)
+    creds = json.loads(response["SecretString"])
+    conn = psycopg2.connect(
+        host=creds["host"],
+        port=creds.get("port", "5432"),
+        dbname=creds["dbname"],
+        user=creds["username"],
+        password=creds["password"]
+    )
+    return conn
+
+def create_session(conn):
+    cur = conn.cursor()
+    session_id = str(uuid.uuid4())
+    cur.execute("SELECT vehicle_id FROM vehicles ORDER BY RANDOM() LIMIT 1")
+    vehicle_id = cur.fetchone()[0]
+    cur.execute("SELECT track_id FROM tracks ORDER BY RANDOM() LIMIT 1")
+    track_id = cur.fetchone()[0]
+    cur.execute("SELECT driver_id FROM drivers ORDER BY RANDOM() LIMIT 1")
+    driver_id = cur.fetchone()[0]
+
+    cur.execute(
+        """
+        INSERT INTO sessions (session_id,track_id,vehicle_id,driver_id)
+        VALUES (%s,%s,%s,%s)
+        """, (session_id,track_id,vehicle_id,driver_id)
+
+    )
+    conn.commit()
+    cur.close()
+    return session_id
+
+def end_session(conn,session_id):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE sessions SET end_time = NOW()
+        WHERE session_id = %s
+        """, (session_id,)
+    )
+    conn.commit()
+    cur.close()
+    return
 
 # Generate Data Logged
 def generate_session_data(session_id:str,n:int) -> dict:
@@ -67,14 +118,20 @@ def stream_data(data:dict,n:int,nth:int):
         time.sleep(1/constants.LIVE_HZ)
     producer.flush()
     print("Finish Streaming Data")
-        
+    
 if __name__ == "__main__":
-    session_id = str(uuid.uuid4()) 
+    SECRET_NAME = "motorsport-rds-credentials"
+    AWS_REGION = "us-east-2"
     session_length_sec = 60
     n = session_length_sec * constants.LOG_HZ 
     nth = constants.LOG_HZ // constants.LIVE_HZ
-
-    data = generate_session_data(session_id,n)
-    buffer = buffer_data(data)
-    batch_data(buffer,session_id)
-    stream_data(data,n,nth)
+    conn = get_db_credentials(SECRET_NAME, AWS_REGION)
+    try:
+        session_id = create_session(conn)
+        data = generate_session_data(session_id,n)
+        buffer = buffer_data(data)
+        batch_data(buffer,session_id)
+        stream_data(data,n,nth)
+        end_session(conn,session_id)
+    finally:
+        conn.close()
