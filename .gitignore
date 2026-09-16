@@ -2,6 +2,7 @@
 .env
 .log
 pastebin.txt
+__pycache__
 
 # Terraform
 **/.terraform/*
