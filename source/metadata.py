@@ -1,4 +1,5 @@
 import io
+import time
 import json
 import boto3
 import random
@@ -44,7 +45,7 @@ def random_new_track(conn):
     )
     track_id = cur.fetchone()[0]
 
-    for i in range(0,random.randint(25,75)):
+    for i in range(0,random.randint(10,30)):
         turn_number = i
         turn_type = random.choice(constants.TURN_TYPE)
         coordinate = f"{random.randint(-100,100)},{random.randint(-100,100)}"
@@ -190,9 +191,13 @@ if __name__ == "__main__":
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
-    new_track_id = random_new_track(conn)
-    new_driver_id = random_new_driver(conn)
-    new_vehicle_id = random_new_vehicle(conn)
-    edited_vehicle_id = random_modify_vehicle(conn)
 
-    conn.close()
+    try:
+        functions = [random_new_track,random_new_driver,random_new_vehicle,random_modify_vehicle]
+        weights = [10, 10, 10, 70]
+        while True:
+            function = random.choices(functions, weights=weights, k=1)[0]
+            function(conn)
+            time.sleep(random.randint(30,60))
+    finally:
+        conn.close()
