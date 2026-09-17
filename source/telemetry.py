@@ -63,14 +63,15 @@ def end_session(conn,session_id):
 # Generate Data Logged
 def generate_session_data(session_id:str,n:int) -> dict:
     data = {}
-    for field in constants.LOG_FIELDS:
-        match field:
-            case "session_id":
-                data[field] = np.full(n,session_id)
-            case "timestamp":
-                data[field] = np.arange(0,n/constants.LOG_HZ,1/constants.LOG_HZ)
-            case _:
-                data[field] = np.random.uniform(0,100, size=n)
+    log_dict = constants.LOG_FIELDS
+    data["session_id"] = np.full(n,session_id)
+    data["timestamp"] = np.arange(n) / constants.LOG_HZ
+    for field in log_dict.keys():
+        mask_null = np.random.random(size=n) < 0.05
+        mask_range = np.random.random(size=n) < 0.02
+        data[field] = np.random.uniform(log_dict[field]['min'],log_dict[field]['max'], size=n)
+        data[field][mask_null] = np.nan
+        data[field][mask_range] = log_dict[field]['spike_val']
     print("Finish Data Generation")
     return data
 
