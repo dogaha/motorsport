@@ -5,6 +5,7 @@ import json
 import boto3
 import random
 import psycopg2
+from collections import deque
 from psycopg2 import sql
 import numpy as np
 import pyarrow as pa
@@ -63,14 +64,15 @@ def end_session(conn,session_id):
 # Generate Data Logged
 def generate_session_data(session_id:str,n:int) -> dict:
     data = {}
-    for field in constants.LOG_FIELDS:
-        match field:
-            case "session_id":
-                data[field] = np.full(n,session_id)
-            case "timestamp":
-                data[field] = np.arange(0,n/constants.LOG_HZ,1/constants.LOG_HZ)
-            case _:
-                data[field] = np.random.uniform(0,100, size=n)
+    log_dict = constants.LOG_FIELDS
+    data["session_id"] = np.full(n,session_id)
+    data["timestamp"] = np.arange(n) / constants.LOG_HZ
+    for field in log_dict.keys():
+        mask_null = np.random.random(size=n) < 0.05
+        mask_range = np.random.random(size=n) < 0.02
+        data[field] = np.random.uniform(log_dict[field]['min'],log_dict[field]['max'], size=n)
+        data[field][mask_null] = np.nan
+        data[field][mask_range] = log_dict[field]['spike_val']
     print("Finish Data Generation")
     return data
 
@@ -95,10 +97,12 @@ def batch_data(buffer: io.BytesIO,session_id:str):
 # Stream Live data
 def stream_data(data:dict,n:int,nth:int):
     # producer
-    producer = Producer({
-        "bootstrap.servers":"kafka:9092"
-    })
-    
+    producer = Producer({ "bootstrap.servers":"kafka:9092" })
+    bs_records = []
+    retry_records = deque()
+    in_blind_spot = False
+    blind_spot_ticks = 0
+
     for i in range(0,n,nth):
         record = {
             field: (
@@ -108,14 +112,79 @@ def stream_data(data:dict,n:int,nth:int):
             )
             for field in constants.LIVE_FIELDS
         }
+        payload = json.dumps(record).encode("utf-8")
+        
+        # Skip Row
+        if random.random() < 0.02:
+            time.sleep(1/constants.LIVE_HZ)
+            continue
 
-        # Push into kafka
-        producer.produce(
-            "telemetry",
-            value=json.dumps(record).encode("utf-8")
-        )
+        # blind spot
+        if random.random() < 0.03 and not in_blind_spot:
+            in_blind_spot = True
+            blind_spot_ticks = random.randint(5,15)
+
+        # retry error
+        if random.random() < 0.03:
+            retry_records.append(payload)
+            time.sleep(1/constants.LIVE_HZ)
+            continue
+
+        # Blind spot condition
+        if in_blind_spot:
+            # fill blind spot
+            bs_records.append(payload)
+            blind_spot_ticks -= 1
+            if blind_spot_ticks <= 0:
+                in_blind_spot = False
+        else:
+            # Push current payload
+            producer.produce(
+                "telemetry",
+                value=payload
+            )
+
+            # duplicate
+            if random.random() < 0.02:
+                producer.produce(
+                    "telemetry",
+                    value=payload
+                )
+
+            # burst refill
+            if bs_records:
+                random.shuffle(bs_records)
+                for p in bs_records:
+                    producer.produce(
+                        "telemetry",
+                        value=p
+                    )
+                bs_records.clear()
+
+            # retry past records
+            if retry_records and random.random() < 0.2:
+                producer.produce(
+                    "telemetry",
+                    value=retry_records.popleft()
+                )
         producer.poll(0)
         time.sleep(1/constants.LIVE_HZ)
+    # burst refill
+    if bs_records:
+        random.shuffle(bs_records)
+        for p in bs_records:
+            producer.produce(
+                "telemetry",
+                value=p
+            )
+        bs_records.clear()
+    while retry_records:
+        producer.produce(
+            "telemetry",
+            value=retry_records.popleft()
+        )
+        producer.poll(0)
+
     producer.flush()
     print("Finish Streaming Data")
     
