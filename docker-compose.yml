@@ -6,10 +6,15 @@ services:
     #  - .env
     #volumes:
     #  - .:/app
+    environment:
+      AWS_DEFAULT_REGION: us-east-2
+    depends_on:
+      kafka:
+        condition: service_healthy
     command: tail -f /dev/null
 
   kafka:
-    image: apache/kafka:latest
+    image: apache/kafka:3.7.0
     container_name: kafka
     ports: []
     environment:
@@ -28,6 +33,37 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  init-topics:
+    image: apache/kafka:3.7.0
+    container_name: init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./debezium/init-topics.sh:/init-topics.sh:ro
+    entrypoint: ["/bin/bash", "/init-topics.sh"]
+    restart: "no"
+
+  init-connector:
+    build:
+      context: .
+      dockerfile: dockerfile.init
+    container_name: init-connector
+    depends_on:
+      kafka-connect:
+        condition: service_healthy
+    volumes:
+      - ./debezium:/debezium:ro
+      - ./db:/db:ro
+    entrypoint: ["/bin/bash", "/debezium/init-connector.sh"]
+    restart: "no"
   
   kafka-connect:
     build:
@@ -35,7 +71,8 @@ services:
       dockerfile: dockerfile.connect
     container_name: kafka-connect
     depends_on:
-      - kafka
+      init-topics:
+        condition: service_completed_successfully
     ports: []
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka:9092
@@ -48,6 +85,13 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/connectors"]
+      interval: 10s
+      timeout: 10s
+      retries: 18
+      start_period: 30s
+    
     
 volumes:
   kafka-data:
