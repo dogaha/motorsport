@@ -1,0 +1,83 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EC2Access",
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3Access",
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "RDSAccess",
+            "Effect": "Allow",
+            "Action": "rds:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SecretsManagerAccess",
+            "Effect": "Allow",
+            "Action": "secretsmanager:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "IAMRoleAccess",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:GetRolePolicy",
+                "iam:GetRole",
+                "iam:PassRole",
+                "iam:TagRole",
+                "iam:UntagRole",
+                "iam:ListRolePolicies",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListInstanceProfilesForRole"
+            ],
+            "Resource": "arn:aws:iam::038774852543:role/motorsport-*"
+        },
+        {
+            "Sid": "IAMInstanceProfileAccess",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:GetInstanceProfile",
+                "iam:TagInstanceProfile"
+            ],
+            "Resource": "arn:aws:iam::038774852543:instance-profile/motorsport-*"
+        },
+        {
+            "Sid": "IAMGlobalListAccess",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListRoles",
+                "iam:ListInstanceProfiles"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowRdsServiceLinkedRole",
+            "Effect": "Allow",
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": "arn:aws:iam::038774852543:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS",
+            "Condition": {
+                "StringLike": {
+                    "iam:AWSServiceName": "rds.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
