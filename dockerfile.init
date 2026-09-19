@@ -1,0 +1,3 @@
+FROM amazon/aws-cli:latest
+RUN yum install -y jq postgresql15 && yum clean all
+ENTRYPOINT ["/bin/bash"]
