@@ -35,6 +35,20 @@ PGPASSWORD="$DB_PASSWORD" psql \
   -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
   -v ON_ERROR_STOP=1 -f /db/init_tables.sql
 
+# 2b. Seed only if the DB is fresh (drivers table empty)
+ROW_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql \
+  -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+  -tA -c "SELECT COUNT(*) FROM drivers;")
+
+if [ "$ROW_COUNT" -eq 0 ]; then
+  echo "empty database, seeding..."
+  PGPASSWORD="$DB_PASSWORD" psql \
+    -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+    -v ON_ERROR_STOP=1 --single-transaction -f /db/seed_tables.sql
+else
+  echo "database already seeded, skipping"
+fi
+
 # 3. Register connector (PUT = create or update); jq escapes values safely
 jq --arg host "$DB_HOST" --arg port "$DB_PORT" --arg user "$DB_USER" \
    --arg pass "$DB_PASSWORD" --arg db "$DB_NAME" \
@@ -47,7 +61,6 @@ jq --arg host "$DB_HOST" --arg port "$DB_PORT" --arg user "$DB_USER" \
  | curl -sS --fail-with-body -X PUT \
      -H "Content-Type: application/json" \
      --data @- \
-     "$CONNECT_URL/connectors/$CONNECTOR_NAME/config"
+     "$CONNECT_URL/connectors/$CONNECTOR_NAME/config" > /dev/null
 
-echo
 echo "connector registered: $CONNECTOR_NAME"
