@@ -43,9 +43,9 @@ resource "aws_iam_role_policy" "ec2_s3" {
     })
 }
 
-resource "aws_iam_role_policy" "ec2_iam" {
+resource "aws_iam_role_policy" "ec2_secret" {
+    name = "motorsport-ec2-secrets-access"
     role = aws_iam_role.ec2.id
-
     policy = jsonencode({
         Version = "2012-10-17"
         Statement = [
