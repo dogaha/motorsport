@@ -1,28 +1,28 @@
 resource "aws_key_pair" "main" {
-    key_name    = "motorsport-ec2-key"
-    public_key  = file("~/.ssh/motorsport-ec2.pub")
+  key_name   = "motorsport-ec2-key"
+  public_key = file("~/.ssh/motorsport-ec2.pub")
 
-    tags = {
-        Project = "motorsport"
-        Environment= "dev"
-    }
+  tags = {
+    Project     = "motorsport"
+    Environment = "dev"
+  }
 }
 
 resource "aws_instance" "main" {
-    ami                         = "ami-0e508bdf5a1337e6b"
-    instance_type               = "m7i-flex.large"
-    subnet_id                   = aws_subnet.public.id
-    vpc_security_group_ids      = [aws_security_group.ec2.id]
-    key_name                    = aws_key_pair.main.key_name
-    iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  ami                    = "ami-0e508bdf5a1337e6b"
+  instance_type          = "m7i-flex.large"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.ec2.id]
+  key_name               = aws_key_pair.main.key_name
+  iam_instance_profile   = aws_iam_instance_profile.ec2.name
 
-    user_data_replace_on_change = true
-    metadata_options {
-       http_put_response_hop_limit = 2
-       http_tokens                 = "required"
-    }
+  user_data_replace_on_change = true
+  metadata_options {
+    http_put_response_hop_limit = 2
+    http_tokens                 = "required"
+  }
 
-    user_data = <<-EOF
+  user_data = <<-EOF
         #!/bin/bash
         set -euxo pipefail
 
@@ -44,10 +44,10 @@ resource "aws_instance" "main" {
         docker compose up -d --build
     EOF
 
-    tags = {
-        Project = "motorsport"
-        Environment= "dev"
-    }
+  tags = {
+    Project     = "motorsport"
+    Environment = "dev"
+  }
 
-    depends_on = [aws_db_instance.motorsport, aws_secretsmanager_secret_version.rds_credentials]
+  depends_on = [aws_db_instance.motorsport, aws_secretsmanager_secret_version.rds_credentials]
 }
