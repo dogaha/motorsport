@@ -1,7 +1,6 @@
 boto3
-pandas
 faker
-python-dotenv
+numpy
 pyarrow
 psycopg2-binary
 confluent-kafka

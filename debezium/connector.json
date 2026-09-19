@@ -1,0 +1,14 @@
+{
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "database.hostname": "",
+  "database.port": "5432",
+  "database.user": "",
+  "database.password": "",
+  "database.dbname": "",
+  "topic.prefix": "motorsport",
+  "table.include.list": "public.tracks,public.track_turns,public.drivers,public.vehicles,public.sessions",
+  "plugin.name": "pgoutput",
+  "slot.name": "debezium_slot",
+  "publication.autocreate.mode": "all_tables",
+  "snapshot.mode": "initial"
+}
