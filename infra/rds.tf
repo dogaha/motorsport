@@ -1,12 +1,12 @@
 resource "random_password" "rds_master" {
-    length              = 32
-    special             = true
-    override_special    = "!#$%&*()-_=+[]{}<>:?"
+    length  = 32
+    special = false
 }
 
 resource "aws_secretsmanager_secret" "rds_credentials" {
     name        = "motorsport-rds-credentials"
     description = "master credentials for motorsport RDS Postgres instance"
+    recovery_window_in_days = 0
     
     tags = {
         Project     = "motorsport"
@@ -19,7 +19,7 @@ resource "aws_secretsmanager_secret_version" "rds_credentials" {
     secret_string = jsonencode({
         username    = "motorsport_master"
         password    = random_password.rds_master.result
-        engine      = "postges"
+        engine      = "postgres"
         host        = aws_db_instance.motorsport.address
         port        = aws_db_instance.motorsport.port
         dbname      = "motorsport_database"
@@ -43,7 +43,7 @@ resource "aws_db_parameter_group" "motorsport" {
 }
 
 resource "aws_db_instance" "motorsport" {
-    identifier = "motorsport-postges"
+    identifier = "motorsport-postgres"
     engine = "postgres"
     engine_version = "17.11"
 
@@ -67,5 +67,4 @@ resource "aws_db_instance" "motorsport" {
 
     deletion_protection = true
     skip_final_snapshot = false
-    final_snapshot_identifier = "motorsport-postgres-final-snapshot"
 }
