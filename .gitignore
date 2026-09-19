@@ -3,6 +3,7 @@
 .log
 pastebin.txt
 __pycache__
+.git
 
 # Terraform
 **/.terraform/*
