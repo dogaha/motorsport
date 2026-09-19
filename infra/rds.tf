@@ -61,10 +61,12 @@ resource "aws_db_instance" "motorsport" {
 
     publicly_accessible = false
     multi_az = false
-
+    
     backup_retention_period = 1
     backup_window = "04:00-05:00"
 
-    deletion_protection = true
-    skip_final_snapshot = false
+    deletion_protection = false
+    skip_final_snapshot = true
+
+    depends_on = [aws_db_instance.motorsport, aws_secretsmanager_secret_version.rds_credentials]
 }
