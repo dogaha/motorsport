@@ -6,7 +6,6 @@ import boto3
 import random
 import psycopg2
 from collections import deque
-from psycopg2 import sql
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -86,7 +85,7 @@ def buffer_data(data: dict) -> io.BytesIO:
 
 def batch_data(buffer: io.BytesIO,session_id:str):
     # send to S3
-    s3 = boto3.client("s3")
+    s3 = boto3.client("s3",region_name="us-east-2")
     s3.upload_fileobj(buffer,"motorsport-data-lake",f"landing/{session_id}.parquet")
 
     # reclaim memory
