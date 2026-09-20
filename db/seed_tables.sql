@@ -1,10 +1,10 @@
--- Seed data: 3 tracks + track_turns, 3 drivers, 3 vehicles
+-- Seed data: 3 tracks + track_sections, 3 drivers, 3 vehicles
 
 -- ---- Tracks ----
-INSERT INTO tracks (name, state, city, lap_length, start_coordinates, end_coordinates) VALUES
-('Harris County Motorsports Park', 'Texas', 'Houston', 2, '(29,-95)', '(29,-95)'),
-('Eagles Canyon Raceway', 'Texas', 'Decatur', 3, '(33,-97)', '(33,-97)'),
-('Circuit of the Americas', 'Texas', 'Austin', 5, '(30,-97)', '(30,-97)');
+INSERT INTO tracks (name, state, city, lap_length) VALUES
+('Harris County Motorsports Park', 'Texas', 'Houston', 2),
+('Eagles Canyon Raceway', 'Texas', 'Decatur', 3),
+('Circuit of the Americas', 'Texas', 'Austin', 5);
 
 -- ---- Drivers ----
 INSERT INTO drivers (first_name, last_name, dob, weight) VALUES
@@ -31,9 +31,9 @@ INSERT INTO vehicles (
 (3, 'Ford', 'Mustang GT', 460, 420, 7500, 'V8', 8, 5000, 'NA', 0,
  'Manual', 6, 'RWD', 4784, 1916, 1381, 2720, 19, 9, 32, 3700, '255/40R19');
 
- -- Seed data: track_turns for tracks 1, 2, 3
+ -- Seed data: track_sections for tracks 1, 2, 3
 
-INSERT INTO track_turns (turn_number, track_id, turn_type, coordinate) VALUES
+INSERT INTO track_sections (section_number, track_id, section_type, start_coordinate) VALUES
 (1, 1, 'sweeper', '(-16,-93)'),
 (2, 1, 'sweeper', '(86,-45)'),
 (3, 1, 'esses', '(-77,67)'),
