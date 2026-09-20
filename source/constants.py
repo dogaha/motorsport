@@ -99,8 +99,8 @@ LOG_FIELDS = {
     "g_force_longitude": {"min": -5.0, "max": 2.0, "spike_val": 99.0},
     "g_force_latitude": {"min": -4.0, "max": 4.0, "spike_val": 99.0},
     "g_force_lateral": {"min": -4.0, "max": 4.0, "spike_val": 99.0},
-    "latitude": {"min": -90.0, "max": 90.0, "spike_val": 999.0},
-    "longitude": {"min": -180.0, "max": 180.0, "spike_val": 999.0},
+    "latitude": {"min": -100, "max": 100, "spike_val": 999.0},
+    "longitude": {"min": -100, "max": 100, "spike_val": 999.0},
 
     # 8. Corner Assemblies (Front Left, Front Right, Rear Left, Rear Right)
     "fl_wheel_speed": {"min": 0.0, "max": 370.0, "spike_val": -50.0},

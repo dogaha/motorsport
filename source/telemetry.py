@@ -69,9 +69,12 @@ def create_session(conn):
         """, (session_id,track_id,vehicle_id,driver_id)
 
     )
+
+    cur.execute("SELECT start_coordinate[0], start_coordinate[1] FROM track_sections WHERE track_id = %s;", (track_id,))
+
     conn.commit()
     cur.close()
-    return session_id
+    return session_id, [row[0] for row in cur.fetchall()]
 
 def end_session(conn,session_id):
     cur = conn.cursor()
@@ -85,18 +88,87 @@ def end_session(conn,session_id):
     cur.close()
     return
 
+import numpy as np
+# import constants (Assuming this is available in your environment)
+
+def positional_data_generation(section_starts, laps, n):
+    section_starts = np.array(section_starts)
+    num_sections = len(section_starts)
+    
+    mandatory_points = num_sections * laps
+    
+    if n < mandatory_points:
+        raise ValueError(f"n={n} is too small. Need at least {mandatory_points} just for the section starts.")
+        
+    random_points_needed = n - mandatory_points
+    
+    points_per_segment = np.random.multinomial(
+        random_points_needed, 
+        [1.0 / mandatory_points] * mandatory_points
+    )
+    
+    # 1. PRE-ALLOCATE the final NumPy array. Shape is (n, 2) for X, Y coordinates
+    track_data = np.empty((n, 2), dtype=float)
+    
+    segment_index = 0
+    current_row = 0  # We will use this to track where to insert the next batch of data
+    
+    for lap in range(laps):
+        for i in range(num_sections):
+            start_coord = section_starts[i]
+            
+            # 2. Insert the single start coordinate directly into the array
+            track_data[current_row] = start_coord
+            current_row += 1
+            
+            end_coord = section_starts[(i + 1) % num_sections]
+            num_random_pts = points_per_segment[segment_index]
+            segment_index += 1
+            
+            if num_random_pts > 0:
+                t_values = np.random.uniform(0.001, 0.999, size=num_random_pts)
+                t_values.sort()
+                t_values = t_values[:, np.newaxis]
+                
+                intermediate_coords = start_coord + t_values * (end_coord - start_coord)
+                
+                # 3. Drop the entire chunk of intermediate coordinates directly into the array
+                track_data[current_row : current_row + num_random_pts] = intermediate_coords
+                
+                # Move the tracker forward
+                current_row += num_random_pts
+                
+    return track_data
+
 # Generate Data Logged
-def generate_session_data(session_id:str,n:int) -> dict:
+def generate_session_data(session_id: str, track_turns: list, laps: int, n: int) -> dict:
     data = {}
     log_dict = constants.LOG_FIELDS
-    data["session_id"] = np.full(n,session_id)
+    
+    data["session_id"] = np.full(n, session_id)
     data["timestamp"] = np.arange(n) / constants.LOG_HZ
+    
+    coords = positional_data_generation(track_turns, laps, n)
+    
+    # 2. Slice the 2D array into our 1D latitude and longitude arrays
+    data["latitude"] = coords[:, 0]
+    data["longitude"] = coords[:, 1]
+
+    # 3. Generate uniform data and apply noise/spikes
     for field in log_dict.keys():
         mask_null = np.random.random(size=n) < 0.05
         mask_range = np.random.random(size=n) < 0.02
-        data[field] = np.random.uniform(log_dict[field]['min'],log_dict[field]['max'], size=n)
+        
+        # Only generate uniform randoms if the field isn't our pre-calculated lat/lon
+        if field not in ["latitude", "longitude"]:
+            data[field] = np.random.uniform(log_dict[field]['min'], log_dict[field]['max'], size=n)
+            
+        # Apply the missing data (np.nan) and spikes to the fields
+        # Note: ensuring the array is float handles potential issues where np.nan fails on int arrays
+        data[field] = data[field].astype(float)
         data[field][mask_null] = np.nan
         data[field][mask_range] = log_dict[field]['spike_val']
+        
     print("Finish Data Generation")
     return data
 
@@ -204,12 +276,13 @@ if __name__ == "__main__":
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
     session_length_sec = 60
+    laps = random.randint(1,10)
     n = session_length_sec * constants.LOG_HZ 
     nth = constants.LOG_HZ // constants.LIVE_HZ
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
     try:
-        session_id = create_session(conn)
-        data = generate_session_data(session_id,n)
+        session_id, track_turns = create_session(conn)
+        data = generate_session_data(session_id,track_turns,laps,n)
         buffer = buffer_data(data)
         batch_data(buffer,session_id)
         stream_data(data,n,nth)
