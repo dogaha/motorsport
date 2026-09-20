@@ -72,3 +72,54 @@ resource "aws_iam_instance_profile" "ec2" {
     Environment = "dev"
   }
 }
+
+
+variable "databricks_uc_master_role_arn" {
+  type = string
+}
+
+variable "databricks_uc_external_id" {
+  type = string
+}
+
+resource "aws_iam_role" "databricks_uc" {
+  name = "motorsport-databricks-uc"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        AWS = [
+          var.databricks_uc_master_role_arn,
+          #"arn:aws:iam::038774852543:role/motorsport-databricks-uc",
+        ]
+      }
+      Action = "sts:AssumeRole"
+      Condition = {
+        StringEquals = { "sts:ExternalId" = var.databricks_uc_external_id }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "databricks_uc_s3" {
+  name = "motorsport-databricks-uc-s3"
+  role = aws_iam_role.databricks_uc.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = "arn:aws:s3:::motorsport-data-lake/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket", "s3:GetBucketLocation"]
+        Resource = "arn:aws:s3:::motorsport-data-lake"
+      }
+    ]
+  })
+}
