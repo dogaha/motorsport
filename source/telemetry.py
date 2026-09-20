@@ -70,11 +70,12 @@ def create_session(conn):
 
     )
 
-    cur.execute("SELECT start_coordinate[0], start_coordinate[1] FROM track_sections WHERE track_id = %s;", (track_id,))
-
+    cur.execute("SELECT start_coordinate[0], start_coordinate[1] FROM track_sections WHERE track_id = %s ORDER BY section_number ASC;", (track_id,))
+    section_starts = cur.fetchall()   # list of (x, y) tuples
+    
     conn.commit()
     cur.close()
-    return session_id, [row[0] for row in cur.fetchall()]
+    return session_id, section_starts
 
 def end_session(conn,session_id):
     cur = conn.cursor()
@@ -88,13 +89,12 @@ def end_session(conn,session_id):
     cur.close()
     return
 
-import numpy as np
-# import constants (Assuming this is available in your environment)
-
 def positional_data_generation(section_starts, laps, n):
-    section_starts = np.array(section_starts)
+    section_starts = np.array(section_starts,dtype=float)
     num_sections = len(section_starts)
     
+    if num_sections == 0 or laps <= 0 or n <= 0:
+        raise ValueError("num_sections, laps and n must all be greater than 0")
     mandatory_points = num_sections * laps
     
     if n < mandatory_points:
@@ -276,16 +276,17 @@ if __name__ == "__main__":
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
     session_length_sec = 60
-    laps = random.randint(1,10)
+    laps = random.randint(1,2)
     n = session_length_sec * constants.LOG_HZ 
     nth = constants.LOG_HZ // constants.LIVE_HZ
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
     try:
         session_id, track_turns = create_session(conn)
         data = generate_session_data(session_id,track_turns,laps,n)
+        producer = get_producer()
         buffer = buffer_data(data)
         batch_data(buffer,session_id)
-        stream_data(data,n,nth)
+        stream_data(producer,data,n,nth)
         end_session(conn,session_id)
     finally:
         conn.close()
