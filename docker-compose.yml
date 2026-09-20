@@ -8,48 +8,7 @@ services:
     #  - .:/app
     environment:
       AWS_DEFAULT_REGION: us-east-2
-    depends_on:
-      kafka:
-        condition: service_healthy
     command: tail -f /dev/null
-
-  kafka:
-    image: apache/kafka:3.7.0
-    container_name: kafka
-    ports: []
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_HEAP_OPTS: "-Xmx400m -Xms400m"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: /var/lib/kafka/data
-    volumes:
-      - kafka-data:/var/lib/kafka/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list"]
-      interval: 10s
-      timeout: 10s
-      retries: 12
-      start_period: 20s
-
-  init-topics:
-    image: apache/kafka:3.7.0
-    container_name: init-topics
-    depends_on:
-      kafka:
-        condition: service_healthy
-    volumes:
-      - ./debezium/init-topics.sh:/init-topics.sh:ro
-    entrypoint: ["/bin/bash", "/init-topics.sh"]
-    restart: "no"
 
   init-connector:
     build:
@@ -70,19 +29,27 @@ services:
       context: .
       dockerfile: dockerfile.connect
     container_name: kafka-connect
-    depends_on:
-      init-topics:
-        condition: service_completed_successfully
     ports: []
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_GROUP_ID: motorsport-connect-cluster
+      AWS_REGION: us-east-2
+      CONNECT_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_SASL_MECHANISM: PLAIN
+      CONNECT_PRODUCER_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_PRODUCER_SASL_MECHANISM: PLAIN
+      CONNECT_CONSUMER_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_CONSUMER_SASL_MECHANISM: PLAIN
+      CONNECT_ADMIN_SECURITY_PROTOCOL: SASL_SSL
+      CONNECT_ADMIN_SASL_MECHANISM: PLAIN
+      CONNECT_GROUP_ID: motorsport-connect
       CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
       CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
       CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 3
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
     restart: unless-stopped
     healthcheck:
@@ -91,7 +58,3 @@ services:
       timeout: 10s
       retries: 18
       start_period: 30s
-    
-    
-volumes:
-  kafka-data:

@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "data_lake" {
   bucket = "motorsport-data-lake"
+  force_destroy = true
 
   tags = {
     Project     = "motorsport"

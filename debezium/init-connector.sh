@@ -49,6 +49,11 @@ else
   echo "database already seeded, skipping"
 fi
 
+# 2c. Sensors: idempotent upsert, safe to run every start
+PGPASSWORD="$DB_PASSWORD" psql \
+  -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+  -v ON_ERROR_STOP=1 -f /db/seed_sensors_table.sql
+
 # 3. Register connector (PUT = create or update); jq escapes values safely
 jq --arg host "$DB_HOST" --arg port "$DB_PORT" --arg user "$DB_USER" \
    --arg pass "$DB_PASSWORD" --arg db "$DB_NAME" \

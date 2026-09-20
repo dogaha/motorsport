@@ -12,7 +12,6 @@ import pyarrow.parquet as pq
 from . import constants
 from confluent_kafka import Producer
 
-
 # credentials
 def get_db_credentials(secret_name: str, region: str = "us-east-2"):
     client = boto3.client("secretsmanager", region_name=region)
@@ -26,6 +25,32 @@ def get_db_credentials(secret_name: str, region: str = "us-east-2"):
         password=creds["password"]
     )
     return conn
+
+def get_producer() -> Producer:
+    client = boto3.client("secretsmanager", region_name="us-east-2")
+    response = client.get_secret_value(SecretId="motorsport-confluent-producer")
+    creds = json.loads(response["SecretString"])
+    return Producer({
+        "bootstrap.servers": creds["bootstrap"],
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanism": "PLAIN",
+        "sasl.username": creds["api_key"],
+        "sasl.password": creds["api_secret"],
+    })
+
+class DeliveryStats:
+    def __init__(self):
+        self.ok = 0
+        self.failed = 0
+        self.first_error = None
+
+    def callback(self, err, msg):
+        if err is not None:
+            self.failed += 1
+            if self.first_error is None:
+                self.first_error = str(err)
+        else:
+            self.ok += 1
 
 def create_session(conn):
     cur = conn.cursor()
@@ -94,15 +119,18 @@ def batch_data(buffer: io.BytesIO,session_id:str):
     return
 
 # Stream Live data
-def stream_data(data:dict,n:int,nth:int):
-    # producer
-    producer = Producer({ "bootstrap.servers":"kafka:9092" })
+def stream_data(producer: Producer, data: dict, n: int, nth: int):
+    stats = DeliveryStats()
+
+    def send(payload: bytes):
+        producer.produce("telemetry", value=payload, callback=stats.callback)
+
     bs_records = []
     retry_records = deque()
     in_blind_spot = False
     blind_spot_ticks = 0
 
-    for i in range(0,n,nth):
+    for i in range(0, n, nth):
         record = {
             field: (
                 data[field][i].item()
@@ -112,7 +140,7 @@ def stream_data(data:dict,n:int,nth:int):
             for field in constants.LIVE_FIELDS
         }
         payload = json.dumps(record).encode("utf-8")
-        
+
         # Skip Row
         if random.random() < 0.02:
             time.sleep(1/constants.LIVE_HZ)
@@ -121,7 +149,7 @@ def stream_data(data:dict,n:int,nth:int):
         # blind spot
         if random.random() < 0.03 and not in_blind_spot:
             in_blind_spot = True
-            blind_spot_ticks = random.randint(5,15)
+            blind_spot_ticks = random.randint(5, 15)
 
         # retry error
         if random.random() < 0.03:
@@ -131,60 +159,45 @@ def stream_data(data:dict,n:int,nth:int):
 
         # Blind spot condition
         if in_blind_spot:
-            # fill blind spot
             bs_records.append(payload)
             blind_spot_ticks -= 1
             if blind_spot_ticks <= 0:
                 in_blind_spot = False
         else:
-            # Push current payload
-            producer.produce(
-                "telemetry",
-                value=payload
-            )
+            send(payload)
 
             # duplicate
             if random.random() < 0.02:
-                producer.produce(
-                    "telemetry",
-                    value=payload
-                )
+                send(payload)
 
             # burst refill
             if bs_records:
                 random.shuffle(bs_records)
                 for p in bs_records:
-                    producer.produce(
-                        "telemetry",
-                        value=p
-                    )
+                    send(p)
                 bs_records.clear()
 
             # retry past records
             if retry_records and random.random() < 0.2:
-                producer.produce(
-                    "telemetry",
-                    value=retry_records.popleft()
-                )
+                send(retry_records.popleft())
+
         producer.poll(0)
         time.sleep(1/constants.LIVE_HZ)
+
     # burst refill
     if bs_records:
         random.shuffle(bs_records)
         for p in bs_records:
-            producer.produce(
-                "telemetry",
-                value=p
-            )
+            send(p)
         bs_records.clear()
     while retry_records:
-        producer.produce(
-            "telemetry",
-            value=retry_records.popleft()
-        )
+        send(retry_records.popleft())
         producer.poll(0)
 
-    producer.flush()
+    remaining = producer.flush(30)
+    print(f"delivered={stats.ok} failed={stats.failed} undelivered_at_timeout={remaining}")
+    if stats.failed or remaining:
+        raise RuntimeError(f"streaming problems, first error: {stats.first_error}")
     print("Finish Streaming Data")
     
 if __name__ == "__main__":

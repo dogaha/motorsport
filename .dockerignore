@@ -1,0 +1,27 @@
+# basics
+.env
+.log
+pastebin.txt
+__pycache__
+.git
+.gitignore
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+*.md
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+.tfvars

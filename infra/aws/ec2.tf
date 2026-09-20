@@ -22,7 +22,7 @@ resource "aws_instance" "main" {
     http_tokens                 = "required"
   }
 
-  user_data = <<-EOF
+  user_data = <<-USERDATA
         #!/bin/bash
         set -euxo pipefail
 
@@ -41,8 +41,9 @@ resource "aws_instance" "main" {
         rm -rf /opt/motorsport
         retry git clone https://github.com/dogaha/motorsport /opt/motorsport
         cd /opt/motorsport
+
         docker compose up -d --build
-    EOF
+  USERDATA
 
   tags = {
     Project     = "motorsport"

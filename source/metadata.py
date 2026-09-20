@@ -46,21 +46,21 @@ def random_new_track(conn):
     track_id = cur.fetchone()[0]
 
     for i in range(0,random.randint(10,30)):
-        turn_number = i
-        turn_type = random.choice(constants.TURN_TYPE)
+        section_number = i
+        section_type = random.choice(constants.section_TYPE) if random.random() < 0.5 else "straight"
         coordinate = f"{random.randint(-100,100)},{random.randint(-100,100)}"
 
         cur.execute(
             """
-            INSERT INTO track_turns (turn_number,track_id,turn_type,coordinates)
+            INSERT INTO track_sections (section_number,track_id,section_type,coordinates)
             VALUES(%s,%s,%s,%s)
             """,
-            (turn_number,track_id,turn_type,coordinate)
+            (section_number,track_id,section_type,coordinate)
         )
 
     conn.commit()
     cur.close()
-    print("Inserted Random Track Record and Track Turns Records")
+    print("Inserted Random Track Record and Track sections Records")
     return track_id
 
 def random_new_driver(conn):

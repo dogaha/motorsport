@@ -54,7 +54,10 @@ resource "aws_iam_role_policy" "ec2_secret" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = aws_secretsmanager_secret.rds_credentials.arn
+        Resource = [
+          aws_secretsmanager_secret.rds_credentials.arn,
+          "arn:aws:secretsmanager:us-east-2:038774852543:secret:motorsport-confluent-*"
+        ]
       }
     ]
   })

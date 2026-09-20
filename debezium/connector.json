@@ -6,7 +6,7 @@
   "database.password": "",
   "database.dbname": "",
   "topic.prefix": "motorsport",
-  "table.include.list": "public.tracks,public.track_turns,public.drivers,public.vehicles,public.sessions",
+  "table.include.list": "public.sensors,public.tracks,public.track_sections,public.drivers,public.vehicles,public.sessions",
   "plugin.name": "pgoutput",
   "slot.name": "debezium_slot",
   "publication.autocreate.mode": "all_tables",
