@@ -162,12 +162,12 @@ def generate_session_data(session_id: str, track_turns: list, laps: int, n: int)
         # Only generate uniform randoms if the field isn't our pre-calculated lat/lon
         if field not in ["latitude", "longitude"]:
             data[field] = np.random.uniform(log_dict[field]['min'], log_dict[field]['max'], size=n)
+            data[field][mask_null] = np.nan
+            data[field][mask_range] = log_dict[field]['spike_val']
             
         # Apply the missing data (np.nan) and spikes to the fields
         # Note: ensuring the array is float handles potential issues where np.nan fails on int arrays
         data[field] = data[field].astype(float)
-        data[field][mask_null] = np.nan
-        data[field][mask_range] = log_dict[field]['spike_val']
         
     print("Finish Data Generation")
     return data
