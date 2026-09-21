@@ -17,4 +17,3 @@ models:
   motorsport_dbt:
     gold:
       +materialized: table
-      +schema: gold
