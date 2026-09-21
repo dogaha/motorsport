@@ -75,6 +75,7 @@ def create_session(conn):
     
     conn.commit()
     cur.close()
+    print("Session Created")
     return session_id, section_starts
 
 def end_session(conn,session_id):
