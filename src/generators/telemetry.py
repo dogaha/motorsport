@@ -87,6 +87,7 @@ def end_session(conn,session_id):
     )
     conn.commit()
     cur.close()
+    print("Ended Session")
     return
 
 def positional_data_generation(section_starts, laps, n):
@@ -275,18 +276,28 @@ def stream_data(producer: Producer, data: dict, n: int, nth: int):
 if __name__ == "__main__":
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
+    laps = random.randint(1,10)
+    session_length_sec = laps * random.randint(5*60,15*60)
+
+    laps = 1
     session_length_sec = 60
-    laps = random.randint(1,2)
+
     n = session_length_sec * constants.LOG_HZ 
     nth = constants.LOG_HZ // constants.LIVE_HZ
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
     try:
+        # Start Session
         session_id, track_turns = create_session(conn)
+
+        # Create Data
+        #producer = get_producer()
         data = generate_session_data(session_id,track_turns,laps,n)
-        producer = get_producer()
         buffer = buffer_data(data)
+
+        # Send Data Over
+        #stream_data(producer,data,n,nth)
+        time.delay(session_length_sec/60)
         batch_data(buffer,session_id)
-        stream_data(producer,data,n,nth)
         end_session(conn,session_id)
     finally:
         conn.close()
