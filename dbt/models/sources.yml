@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: silver
+    catalog: motorsport
+    schema: silver
+    tables:
+      - name: sessions
+      - name: tracks
+      - name: track_sections
+      - name: drivers
+      - name: vehicles
+      - name: sensors
+      - name: telemetry
