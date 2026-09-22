@@ -103,7 +103,6 @@ locals {
     "motorsport.public.drivers",
     "motorsport.public.vehicles",
     "motorsport.public.sessions",
-    "motorsport.public.sensors",
   ]
 
   data_topics = concat(local.cdc_topics, ["telemetry"])
