@@ -27,7 +27,7 @@ select
     {{ row.normal_min }} as normal_min,
     {{ row.normal_max }} as normal_max
 from {{ source('silver', 'telemetry') }} t
-left join {{ source('silver', 'sessions') }} s
+left join {{ ref('fct_sessions') }} s
     on t.session_id = s.session_id
 where t.{{ row.sensor_name }} < {{ row.normal_min }}
    or t.{{ row.sensor_name }} > {{ row.normal_max }}
