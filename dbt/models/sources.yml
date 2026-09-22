@@ -10,5 +10,4 @@ sources:
       - name: track_sections
       - name: drivers
       - name: vehicles
-      - name: sensors
       - name: telemetry
