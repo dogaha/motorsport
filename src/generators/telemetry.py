@@ -55,12 +55,39 @@ class DeliveryStats:
 def create_session(conn):
     cur = conn.cursor()
     session_id = str(uuid.uuid4())
-    cur.execute("SELECT vehicle_id FROM vehicles ORDER BY RANDOM() LIMIT 1")
-    vehicle_id = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT v.vehicle_id
+        FROM vehicles v
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sessions s
+            WHERE s.vehicle_id = v.vehicle_id AND s.end_time IS NULL
+        )
+        ORDER BY RANDOM() LIMIT 1
+    """)
+    row = cur.fetchone()
+    if row is None:
+        cur.close()
+        raise Exception("No available vehicle")
+    vehicle_id = row[0]
+
+    cur.execute("""
+        SELECT d.driver_id
+        FROM drivers d
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sessions s
+            WHERE s.driver_id = d.driver_id AND s.end_time IS NULL
+        )
+        ORDER BY RANDOM() LIMIT 1
+    """)
+    row = cur.fetchone()
+    if row is None:
+        cur.close()
+        raise Exception("No available driver")
+    driver_id = row[0]
+
     cur.execute("SELECT track_id FROM tracks ORDER BY RANDOM() LIMIT 1")
     track_id = cur.fetchone()[0]
-    cur.execute("SELECT driver_id FROM drivers ORDER BY RANDOM() LIMIT 1")
-    driver_id = cur.fetchone()[0]
 
     cur.execute(
         """
@@ -72,6 +99,10 @@ def create_session(conn):
 
     cur.execute("SELECT start_coordinate[0], start_coordinate[1] FROM track_sections WHERE track_id = %s ORDER BY section_number ASC;", (track_id,))
     section_starts = cur.fetchall()   # list of (x, y) tuples
+
+    if driver_id is None or vehicle_id is None:
+        cur.close()
+        raise Exception("No Available Driver Or Vehicle")
     
     conn.commit()
     cur.close()
@@ -273,7 +304,7 @@ def stream_data(producer: Producer, data: dict, n: int, nth: int):
     if stats.failed or remaining:
         raise RuntimeError(f"streaming problems, first error: {stats.first_error}")
     print("Finish Streaming Data")
-    
+       
 if __name__ == "__main__":
     print("--telemetry.py--")
     SECRET_NAME = "motorsport-rds-credentials"
@@ -287,6 +318,7 @@ if __name__ == "__main__":
     n = session_length_sec * constants.LOG_HZ 
     nth = constants.LOG_HZ // constants.LIVE_HZ
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
+
     try:
         # Start Session
         session_id, track_turns = create_session(conn)

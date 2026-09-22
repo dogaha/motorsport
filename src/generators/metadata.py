@@ -150,11 +150,21 @@ def random_modify_vehicle(conn):
     gearbox_type = random.choice(constants.GEARBOX_TYPE)
     wheel_diameter = random.randint(15, 22)
 
-    cur.execute("SELECT vehicle_id FROM vehicles ORDER BY RANDOM() LIMIT 1")
-    vehicle_id = cur.fetchone()[0]
-
-    if not vehicle_id:
+    cur.execute("""
+        SELECT v.vehicle_id
+        FROM vehicles v
+        WHERE NOT EXISTS (
+            SELECT 1 FROM sessions s
+            WHERE s.vehicle_id = v.vehicle_id
+            AND s.end_time IS NULL
+        )
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+    row = cur.fetchone()
+    if row is None:
         return None
+    vehicle_id = row[0]
 
     car = {
         "horsepower": random.randint(150, 900),
@@ -197,7 +207,10 @@ if __name__ == "__main__":
         weights = [10, 25, 25, 40]
         while True:
             function = random.choices(functions, weights=weights, k=1)[0]
-            function(conn)
+            result = function(conn) 
+            if result is None:
+                result = random_new_vehicle(conn)
+                continue
             time.sleep(random.randint(15,30))
     finally:
         conn.close()
