@@ -275,6 +275,7 @@ def stream_data(producer: Producer, data: dict, n: int, nth: int):
     print("Finish Streaming Data")
     
 if __name__ == "__main__":
+    print("--telemetry.py--")
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
     laps = random.randint(1,10)
@@ -297,7 +298,7 @@ if __name__ == "__main__":
 
         # Send Data Over
         #stream_data(producer,data,n,nth)
-        time.delay(session_length_sec/60)
+        time.sleep(session_length_sec/60)
         batch_data(buffer,session_id)
         end_session(conn,session_id)
     finally:
