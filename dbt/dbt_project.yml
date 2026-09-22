@@ -8,7 +8,7 @@ require-dbt-version: [">=1.8.0", "<2.0.0"]
 
 model-paths: ["models"]
 macro-paths: ["macros"]
-seed-paths: ["seed"]
+seed-paths: ["seeds"]
 
 clean-targets:
   - "target"
@@ -17,4 +17,4 @@ clean-targets:
 models:
   motorsport_dbt:
     gold:
-      +materialized: table
+      +materialized: incremental

@@ -29,8 +29,8 @@ select
 from {{ source('silver', 'telemetry') }} t
 left join {{ ref('fct_sessions') }} s
     on t.session_id = s.session_id
-where t.{{ row.sensor_name }} < {{ row.normal_min }}
-   or t.{{ row.sensor_name }} > {{ row.normal_max }}
+where (t.{{ row.sensor_name }} < {{ row.normal_min }} or t.{{ row.sensor_name }} > {{ row.normal_max }})
+   and (t.{{ row.sensor_name }} <= {{ row.max_valid }} and t.{{ row.sensor_name }} => {{ row.min_valid}})
 {% if not loop.last %} union all {% endif %}
 {% endfor %}
 

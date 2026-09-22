@@ -1,3 +1,9 @@
+{{
+  config(
+    incremental_strategy = 'merge'
+  )
+}}
+
 select
     vehicle_id,
     owner_id as driver_id,

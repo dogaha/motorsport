@@ -1,12 +1,32 @@
+{{
+  config(
+    liquid_clustering = ['session_id','lap']
+  )
+}}
+
+with section_durations as (
+    select
+        session_id,
+        lap,
+        section_number,
+        max(timestamp) - min(timestamp) as section_duration_seconds
+    from {{ source('silver', 'telemetry') }}
+    group by session_id, lap, section_number
+)
+
 select
     s.session_id,
     s.driver_id,
     s.vehicle_id,
     s.track_id,
-    t.lap,
-    t.section_number,
-    max(t.elapsed_seconds) - min(t.elapsed_seconds) as section_duration_seconds
-from {{ source('silver', 'telemetry') }} t
-left join {{ ref('fct_sessions') }} s
-    on t.session_id = s.session_id
-group by s.session_id, s.driver_id, s.vehicle_id, s.track_id, t.lap, t.section_number
+    sd.lap,
+    sd.section_number,
+    sd.section_duration_seconds,
+    concat(
+        lpad(cast(floor(sd.section_duration_seconds / 60) as string), 2, '0'), ':',
+        lpad(cast(floor(sd.section_duration_seconds % 60) as string), 2, '0'), '.',
+        lpad(cast(round((sd.section_duration_seconds - floor(sd.section_duration_seconds)) * 1000) as string), 2, '0')
+    ) as section_duration_display
+from section_durations sd
+left join {{ source('silver', 'sessions') }} s
+    on sd.session_id = s.session_id
