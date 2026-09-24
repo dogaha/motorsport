@@ -37,25 +37,25 @@ def random_new_track(conn):
 
     cur.execute(
         """
-        INSERT INTO tracks (name,state,city,lap_length,start_coordinates,end_coordinates)
-        VALUES (%s,%s,%s,%s,%s,%s)
+        INSERT INTO tracks (name,state,city,lap_length)
+        VALUES (%s,%s,%s,%s,%s,)
         RETURNING track_id
         """,
-        (name,state,city,lap_length,start_coordinates,end_coordinate)
+        (name,state,city,lap_length)
     )
     track_id = cur.fetchone()[0]
 
     for i in range(0,random.randint(10,30)):
         section_number = i
         section_type = random.choice(constants.section_TYPE) if random.random() < 0.5 else "straight"
-        coordinate = f"{random.randint(-100,100)},{random.randint(-100,100)}"
+        start_coordinate = f"{random.randint(-100,100)},{random.randint(-100,100)}"
 
         cur.execute(
             """
-            INSERT INTO track_sections (section_number,track_id,section_type,coordinates)
+            INSERT INTO track_sections (section_number,track_id,section_type,start_coordinate)
             VALUES(%s,%s,%s,%s)
             """,
-            (section_number,track_id,section_type,coordinate)
+            (section_number,track_id,section_type,start_coordinate)
         )
 
     conn.commit()
