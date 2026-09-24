@@ -1,5 +1,11 @@
 version: 2
 
+seeds:
+  - name: sensors
+    columns:
+      - name: sensor_name
+        tests: [unique, not_null]
+        
 sources:
   - name: silver
     catalog: motorsport
@@ -11,3 +17,138 @@ sources:
       - name: drivers
       - name: vehicles
       - name: telemetry
+
+models:
+  - name: dim_drivers
+    columns:
+      - name: driver_id
+        tests: [unique, not_null]
+      - name: driver_full_name
+        tests: [not_null]
+
+  - name: dim_tracks
+    columns:
+      - name: track_id
+        tests: [unique, not_null]
+      - name: track_length_miles
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: false
+
+  - name: dim_track_sections
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [track_id, section_number]
+    columns:
+      - name: section_id
+        tests: [unique, not_null]
+      - name: track_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_tracks')
+              field: track_id
+
+  - name: dim_vehicles
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [vehicle_id, version_number]
+    columns:
+      - name: vehicle_id
+        tests: [not_null]
+      - name: driver_id
+        tests:
+          - relationships:
+              to: ref('dim_drivers')
+              field: driver_id
+
+  - name: fct_sessions
+    columns:
+      - name: session_id
+        tests: [unique, not_null]
+      - name: vehicle_id
+        tests:
+          - relationships:
+              to: ref('dim_vehicles')
+              field: vehicle_id
+      - name: vehicle_version_number
+        tests: [not_null]
+      - name: driver_id
+        tests:
+          - relationships:
+              to: ref('dim_drivers')
+              field: driver_id
+      - name: track_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_tracks')
+              field: track_id
+
+  - name: fct_section_times
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [session_id, section_number, lap_number]
+    columns:
+      - name: session_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_sessions')
+              field: session_id
+      - name: vehicle_id
+        tests:
+          - relationships:
+              to: ref('dim_vehicles')
+              field: vehicle_id
+      - name: vehicle_version_number
+        tests: [not_null]
+      - name: driver_id
+        tests:
+          - relationships:
+              to: ref('dim_drivers')
+              field: driver_id
+      - name: track_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_tracks')
+              field: track_id
+
+  - name: fct_warning
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [session_id, sensor_name, reading_ts]
+    columns:
+      - name: session_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_sessions')
+              field: session_id
+      - name: vehicle_id
+        tests:
+          - relationships:
+              to: ref('dim_vehicles')
+              field: vehicle_id
+      - name: vehicle_version_number
+        tests: [not_null]
+      - name: driver_id
+        tests:
+          - relationships:
+              to: ref('dim_drivers')
+              field: driver_id
+      - name: track_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_tracks')
+              field: track_id
+      - name: sensor_name
+        tests:
+          - not_null
+          - relationships:
+              to: ref('sensors')
+              field: sensor_name

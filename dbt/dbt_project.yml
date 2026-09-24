@@ -17,4 +17,4 @@ clean-targets:
 models:
   motorsport_dbt:
     gold:
-      +materialized: incremental
+      +materialized: table

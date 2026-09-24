@@ -1,6 +1,7 @@
 {{
   config(
-    liquid_clustering = ['session_id']
+    materialized='incremental',
+    incremental_strategy='append'
   )
 }}
 
