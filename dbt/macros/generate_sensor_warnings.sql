@@ -20,7 +20,6 @@ with base as (
         t._ingested_at,
         s.driver_id,
         s.vehicle_id,
-        s.vehicle_version_number,
         s.track_id,
         s.session_start_ts,
         stack(
@@ -45,7 +44,6 @@ select
     session_id,
     driver_id,
     vehicle_id,
-    vehicle_version_number,
     track_id,
     timestamp * interval 1 second + session_start_ts as reading_ts,
     sensor_name,

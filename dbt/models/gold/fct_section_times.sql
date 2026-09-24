@@ -25,7 +25,6 @@ select
     s.session_id,
     s.driver_id,
     s.vehicle_id,
-    s.vehicle_version_number,
     s.track_id,
     sd.lap,
     sd.section_number,

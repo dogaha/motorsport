@@ -73,8 +73,6 @@ models:
           - relationships:
               to: ref('dim_vehicles')
               field: vehicle_id
-      - name: vehicle_version_number
-        tests: [not_null]
       - name: driver_id
         tests:
           - relationships:
@@ -103,8 +101,6 @@ models:
           - relationships:
               to: ref('dim_vehicles')
               field: vehicle_id
-      - name: vehicle_version_number
-        tests: [not_null]
       - name: driver_id
         tests:
           - relationships:
@@ -133,8 +129,6 @@ models:
           - relationships:
               to: ref('dim_vehicles')
               field: vehicle_id
-      - name: vehicle_version_number
-        tests: [not_null]
       - name: driver_id
         tests:
           - relationships:
