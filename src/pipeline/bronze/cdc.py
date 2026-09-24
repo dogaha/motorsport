@@ -2,6 +2,7 @@ from pyspark.sql import DataFrame
 
 def to_bronze(df: DataFrame) -> DataFrame:
     """Shape raw Kafka rows into a bronze CDC table. No parsing: value stays raw JSON."""
+    
     return df.selectExpr(
         "topic",
         "partition",

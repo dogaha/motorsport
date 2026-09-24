@@ -48,8 +48,8 @@ def add_sections(telemetry: DataFrame, sections: DataFrame) -> DataFrame:
     matched = telemetry.join(
         s,
         (telemetry["track_id"] == s["_s_track_id"])
-        & (telemetry["latitude"] == s["start_y"])
-        & (telemetry["longitude"] == s["start_x"]),
+        & (telemetry["latitude"] == s["start_x"])
+        & (telemetry["longitude"] == s["start_y"]),
         "left",
     ).select(telemetry["*"], s["section_number"])
 
