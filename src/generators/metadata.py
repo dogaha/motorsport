@@ -115,7 +115,10 @@ def random_new_vehicle(conn):
     tires = f"{random.randint(160,260)}/{random.randrange(40,71,5)}R{wheel_diameter}"
 
     cur.execute("SELECT driver_id FROM drivers ORDER BY RANDOM() LIMIT 1")
-    owner_id = cur.fetchone()[0]
+    row = cur.fetchone()
+    if row is None:
+        return None
+    owner_id = row[0]
 
     cur.execute(
         """
@@ -210,7 +213,7 @@ if __name__ == "__main__":
             result = function(conn) 
             if result is None:
                 result = random_new_vehicle(conn)
-                continue
+                result = random_new_driver(conn)
             time.sleep(random.randint(15,30))
     finally:
         conn.close()

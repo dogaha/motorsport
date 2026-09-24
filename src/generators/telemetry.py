@@ -68,7 +68,7 @@ def create_session(conn):
     row = cur.fetchone()
     if row is None:
         cur.close()
-        raise Exception("No available vehicle")
+        return None,None
     vehicle_id = row[0]
 
     cur.execute("""
@@ -83,7 +83,7 @@ def create_session(conn):
     row = cur.fetchone()
     if row is None:
         cur.close()
-        raise Exception("No available driver")
+        return None, None
     driver_id = row[0]
 
     cur.execute("SELECT track_id FROM tracks ORDER BY RANDOM() LIMIT 1")
@@ -99,10 +99,6 @@ def create_session(conn):
 
     cur.execute("SELECT start_coordinate[0], start_coordinate[1] FROM track_sections WHERE track_id = %s ORDER BY section_number ASC;", (track_id,))
     section_starts = cur.fetchall()   # list of (x, y) tuples
-
-    if driver_id is None or vehicle_id is None:
-        cur.close()
-        raise Exception("No Available Driver Or Vehicle")
     
     conn.commit()
     cur.close()
@@ -126,13 +122,8 @@ def positional_data_generation(section_starts, laps, n):
     section_starts = np.array(section_starts,dtype=float)
     num_sections = len(section_starts)
     
-    if num_sections == 0 or laps <= 0 or n <= 0:
-        raise ValueError("num_sections, laps and n must all be greater than 0")
     mandatory_points = num_sections * laps
     
-    if n < mandatory_points:
-        raise ValueError(f"n={n} is too small. Need at least {mandatory_points} just for the section starts.")
-        
     random_points_needed = n - mandatory_points
     
     points_per_segment = np.random.multinomial(
@@ -309,29 +300,29 @@ if __name__ == "__main__":
     print("--telemetry.py--")
     SECRET_NAME = "motorsport-rds-credentials"
     AWS_REGION = "us-east-2"
-    laps = random.randint(1,10)
-    session_length_sec = laps * random.randint(5*60,15*60)
-
-    laps = 1
-    session_length_sec = 60
-
-    n = session_length_sec * constants.LOG_HZ 
-    nth = constants.LOG_HZ // constants.LIVE_HZ
+    laps = 6
     conn = get_db_credentials(SECRET_NAME, AWS_REGION)
+    #nth = constants.LOG_HZ // constants.LIVE_HZ
+    #producer = get_producer()
 
     try:
-        # Start Session
-        session_id, track_turns = create_session(conn)
+        while True:
+            session_length_sec = laps * random.randint(150,400)
 
-        # Create Data
-        #producer = get_producer()
-        data = generate_session_data(session_id,track_turns,laps,n)
-        buffer = buffer_data(data)
+            n = session_length_sec * constants.LOG_HZ 
+            # Start Session
+            session_id, track_turns = create_session(conn)
+            if session_id == None:
+                time.sleep(15)
+                continue 
+            # Create Data
+            data = generate_session_data(session_id,track_turns,laps,n)
+            buffer = buffer_data(data)
 
-        # Send Data Over
-        #stream_data(producer,data,n,nth)
-        time.sleep(session_length_sec/60)
-        batch_data(buffer,session_id)
-        end_session(conn,session_id)
+            # Send Data Over
+            #stream_data(producer,data,n,nth)
+            time.sleep(session_length_sec/60)
+            batch_data(buffer,session_id)
+            end_session(conn,session_id)
     finally:
         conn.close()
