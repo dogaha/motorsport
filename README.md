@@ -97,7 +97,8 @@ Checkout [Data Architecture](docs/DATA_MODEL.svg) for more details
 
 Checkout [Schema Reference](docs/SCHEMEA_REFERENCE.md) for details about scheams
 
-
+## Sample Dashboard
+![Sample Dashboard](docs/dashboard_sample.png)
 
 ## Repository layout
 
