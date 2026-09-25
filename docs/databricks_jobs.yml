@@ -1,0 +1,132 @@
+resources:
+  jobs:
+    motorsport_orchestration:
+      name: motorsport-orchestration
+      trigger:
+        pause_status: PAUSED
+        periodic:
+          interval: 15
+          unit: MINUTES
+      tasks:
+        - task_key: ingest_cdc_drivers
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_cdc
+            base_parameters:
+              topic: motorsport.public.drivers
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: ingest_cdc_sessions
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_cdc
+            base_parameters:
+              topic: motorsport.public.sessions
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: ingest_cdc_track_sections
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_cdc
+            base_parameters:
+              topic: motorsport.public.track_sections
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: ingest_cdc_tracks
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_cdc
+            base_parameters:
+              topic: motorsport.public.tracks
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: ingest_cdc_vehicles
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_cdc
+            base_parameters:
+              topic: motorsport.public.vehicles
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: ingest_telemetry
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/bronze/ingest_telemetry
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+        - task_key: process_cdc_drivers
+          depends_on:
+            - task_key: ingest_cdc_drivers
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_cdc
+            base_parameters:
+              table: drivers
+            source: WORKSPACE
+        - task_key: process_cdc_sessions
+          depends_on:
+            - task_key: ingest_cdc_sessions
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_cdc
+            base_parameters:
+              table: sessions
+            source: WORKSPACE
+        - task_key: process_cdc_track_sections
+          depends_on:
+            - task_key: ingest_cdc_track_sections
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_cdc
+            base_parameters:
+              table: track_sections
+            source: WORKSPACE
+        - task_key: process_cdc_tracks
+          depends_on:
+            - task_key: ingest_cdc_tracks
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_cdc
+            base_parameters:
+              table: tracks
+            source: WORKSPACE
+        - task_key: process_cdc_vehicles
+          depends_on:
+            - task_key: ingest_cdc_vehicles
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_cdc
+            base_parameters:
+              table: vehicles
+            source: WORKSPACE
+        - task_key: process_telemetry
+          depends_on:
+            - task_key: ingest_telemetry
+          notebook_task:
+            notebook_path: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/notebooks/silver/process_telemetry
+            source: WORKSPACE
+        - task_key: run_dbt_dim
+          depends_on:
+            - task_key: process_cdc_sessions
+            - task_key: process_cdc_tracks
+            - task_key: process_cdc_track_sections
+            - task_key: process_telemetry
+            - task_key: process_cdc_drivers
+            - task_key: process_cdc_vehicles
+          dbt_task:
+            project_directory: /Workspace/Users/ekhangvbusiness@gmail.com/motorsport/dbt
+            commands:
+              - dbt deps
+              - dbt seed
+              - dbt run
+            schema: gold
+            warehouse_id: 9f011b3057a4d531
+            catalog: motorsport
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+          environment_key: dbt-default
+      queue:
+        enabled: true
+      environments:
+        - environment_key: dbt-default
+          spec:
+            dependencies:
+              - dbt-databricks>=1.0.0,<2.0.0
+            environment_version: "5"
+      performance_target: PERFORMANCE_OPTIMIZED
