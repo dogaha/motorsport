@@ -1,0 +1,526 @@
+{
+  "datasets": [
+    {
+      "name": "e94ae645",
+      "displayName": "fct_sessions",
+      "config": {
+        "source": "motorsport.gold.fct_section_times",
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ],
+        "filter": "selected_driver_id IS NULL OR driver_id = selected_driver_id",
+        "version": "1.1",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "selected_driver_id",
+            "dataType": "INT",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "14e89b6a",
+      "displayName": "fct_section_times_expanded",
+      "queryLines": [
+        "SELECT \r\n",
+        "    st.*,\r\n",
+        "    ROUND(section_duration_seconds,2) AS rounded_section_duration_seconds,\r\n",
+        "    d.driver_full_name,\r\n",
+        "    v.vehicle_make,\r\n",
+        "    v.vehicle_model,\r\n",
+        "    ts.section_type,\r\n",
+        "    t.track_name,\r\n",
+        "    ROUND(\r\n",
+        "        SUM(ROUND(section_duration_seconds,2)) OVER (PARTITION BY st.session_id,st.lap),\r\n",
+        "        2\r\n",
+        "    ) AS lap_duration_seconds\r\n",
+        "FROM motorsport.gold.fct_section_times st \r\n",
+        "LEFT JOIN motorsport.gold.dim_drivers d\r\n",
+        "    ON st.driver_id = d.driver_id\r\n",
+        "LEFT JOIN motorsport.gold.dim_vehicles v\r\n",
+        "    ON st.vehicle_id = v.vehicle_id\r\n",
+        "LEFT JOIN motorsport.gold.dim_tracks t\r\n",
+        "    ON st.track_id = t.track_id\r\n",
+        "LEFT JOIN motorsport.gold.dim_track_sections ts\r\n",
+        "    ON st.track_id = ts.track_id \r\n",
+        "    AND st.section_number = ts.section_number\r\n",
+        "WHERE st.lap != 0;"
+      ],
+      "catalog": "workspace",
+      "schema": "default"
+    },
+    {
+      "name": "015b789d",
+      "displayName": "fct_warning_summary",
+      "queryLines": [
+        "WITH expanded_fct_warning AS (\n",
+        "  SELECT\n",
+        "    w.*,\n",
+        "    CASE\n",
+        "      WHEN w.value < w.normal_min THEN 'overload'\n",
+        "      ELSE 'underload'\n",
+        "    END AS category\n",
+        "  FROM\n",
+        "    motorsport.gold.fct_warning w\n",
+        ")\n",
+        "SELECT\n",
+        "  session_id,\n",
+        "  sensor_name,\n",
+        "  COUNT(*) AS total_warnings,\n",
+        "  COUNT(*) * 1.0 / SUM(COUNT(*)) OVER (PARTITION BY session_id) AS total_warnings_percentage,\n",
+        "  CASE\n",
+        "    WHEN COUNT(*) * 1.0 / SUM(COUNT(*)) OVER (PARTITION BY session_id) > 0.02 THEN 'Above 2.0%'\n",
+        "    ELSE 'Below 2.0%'\n",
+        "  END AS warning_flag,\n",
+        "  COUNT(CASE WHEN category = 'overload' THEN 1 END) AS above_threshold,\n",
+        "  COUNT(CASE WHEN category = 'underload' THEN 1 END) AS below_threshold\n",
+        "FROM\n",
+        "  expanded_fct_warning\n",
+        "GROUP BY\n",
+        "  session_id,\n",
+        "  sensor_name"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "edb11871",
+      "displayName": "Session Analysis",
+      "layout": [
+        {
+          "widget": {
+            "name": "c3b133b6",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "14e89b6a",
+                  "fields": [
+                    {
+                      "name": "min(driver_id)",
+                      "expression": "MIN(`driver_id`)"
+                    },
+                    {
+                      "name": "min(driver_full_name)",
+                      "expression": "MIN(`driver_full_name`)"
+                    },
+                    {
+                      "name": "min(vehicle_id)",
+                      "expression": "MIN(`vehicle_id`)"
+                    },
+                    {
+                      "name": "min(vehicle_make)",
+                      "expression": "MIN(`vehicle_make`)"
+                    },
+                    {
+                      "name": "min(vehicle_model)",
+                      "expression": "MIN(`vehicle_model`)"
+                    },
+                    {
+                      "name": "min(track_id)",
+                      "expression": "MIN(`track_id`)"
+                    },
+                    {
+                      "name": "min(track_name)",
+                      "expression": "MIN(`track_name`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Session Info",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "min(driver_id)",
+                    "displayName": "Driver ID"
+                  },
+                  {
+                    "fieldName": "min(driver_full_name)",
+                    "displayName": "Driver Name"
+                  },
+                  {
+                    "fieldName": "min(vehicle_id)",
+                    "displayName": "Vehicle ID"
+                  },
+                  {
+                    "fieldName": "min(vehicle_make)",
+                    "displayName": "Make"
+                  },
+                  {
+                    "fieldName": "min(vehicle_model)",
+                    "displayName": "Model"
+                  },
+                  {
+                    "fieldName": "min(track_id)",
+                    "displayName": "Track ID"
+                  },
+                  {
+                    "fieldName": "min(track_name)",
+                    "displayName": "Track Name"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "aa0c4bf8",
+            "queries": [
+              {
+                "name": "dashboards/01f1b910ab0f1bdebbd27677837333f0/datasets/01f1b91d0b7619169a795673ee00bc3c_session_id",
+                "query": {
+                  "datasetName": "14e89b6a",
+                  "fields": [
+                    {
+                      "name": "session_id",
+                      "expression": "`session_id`"
+                    },
+                    {
+                      "name": "session_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1b910ab0f1bdebbd27677837333f0/datasets/01f1b92cf7191e36bd3ae2d4710ceea2_session_id",
+                "query": {
+                  "datasetName": "015b789d",
+                  "fields": [
+                    {
+                      "name": "session_id",
+                      "expression": "`session_id`"
+                    },
+                    {
+                      "name": "session_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "selection": {
+                "defaultSelection": {
+                  "operator": {
+                    "operator": "OR",
+                    "args": []
+                  }
+                }
+              },
+              "disallowAll": true,
+              "frame": {
+                "showTitle": true
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "session_id",
+                    "queryName": "dashboards/01f1b910ab0f1bdebbd27677837333f0/datasets/01f1b91d0b7619169a795673ee00bc3c_session_id"
+                  },
+                  {
+                    "fieldName": "session_id",
+                    "queryName": "dashboards/01f1b910ab0f1bdebbd27677837333f0/datasets/01f1b92cf7191e36bd3ae2d4710ceea2_session_id"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "3bf9b497",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "14e89b6a",
+                  "fields": [
+                    {
+                      "name": "lap",
+                      "expression": "`lap`"
+                    },
+                    {
+                      "name": "section_number",
+                      "expression": "`section_number`"
+                    },
+                    {
+                      "name": "sum(section_duration_seconds)",
+                      "expression": "SUM(`section_duration_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Section Completion Time by Section Number",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "section_number",
+                  "axis": {
+                    "labelAngle": 0
+                  },
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(section_duration_seconds)",
+                  "axis": {
+                    "title": "Section time"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "lap",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "e76a1f37",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "015b789d",
+                  "fields": [
+                    {
+                      "name": "warning_flag",
+                      "expression": "`warning_flag`"
+                    },
+                    {
+                      "name": "sensor_name",
+                      "expression": "`sensor_name`"
+                    },
+                    {
+                      "name": "total_warnings",
+                      "expression": "`total_warnings`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Sensor Warning Rate",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sensor_name",
+                  "axis": {
+                    "labelAngle": 45
+                  },
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "total_warnings",
+                  "axis": {
+                    "title": "Warning Rate"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "warning_flag",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Above 1.5%",
+                        "color": "#FF3621"
+                      },
+                      {
+                        "value": "Below 1.5%",
+                        "color": "#4CAF50"
+                      },
+                      {
+                        "value": "Above 2.0%",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "Below 2.0%",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 3
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "lap-completion-time-by-lap-number",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "14e89b6a",
+                  "fields": [
+                    {
+                      "name": "lap",
+                      "expression": "`lap`"
+                    },
+                    {
+                      "name": "sum(rounded_section_duration_seconds)",
+                      "expression": "SUM(`rounded_section_duration_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Lap Completion Time by Lap Number",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "lap",
+                  "axis": {
+                    "labelAngle": 0,
+                    "title": "Lap"
+                  },
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(rounded_section_duration_seconds)",
+                  "axis": {
+                    "title": "Lap Time"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
