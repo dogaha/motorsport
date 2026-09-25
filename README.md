@@ -10,6 +10,23 @@ scripts in this repo. The project is intentionally scoped to demonstrate
 production-realistic pipeline engineering, not analytics, ML, or a live
 product.
 
+## Tech Stack
+
+| Component        | Tool                    | Purpose                                            |
+|-------------------|--------------------------|-----------------------------------------------------|
+| Cloud Provider    | AWS                      | Hosting infrastructure (RDS, S3, VPC)               |
+| Streaming         | Confluent Cloud (Kafka)  | Managed event backbone for CDC change events        |
+| CDC               | Debezium (EC2)           | Captures row-level changes from OLTP databas        |
+| Source DB         | PostgreSQL (RDS)         | Holds dimension tables only                         |
+| Object Storage    | S3                       | Data lake storage for bronze/silver/gold            |
+| File Format       | Parquet                  | Columnar storage for telemetry files                |
+| Processing        | Databricks (PySpark)     | Full medallion architecture — streaming and batch   |
+| Transformation    | Databricks (dbt)         | SQL-based modeling (silver→gold)                    |
+| Dashboarding      | Databricks               | Visualization/BI on gold layer                      |
+| Orchestration     | Databricks Jobs          | Scheduling                                          |
+| IaC               | Terraform                | Provisions AWS infra + Confluent Cloud resources    |
+| Containerization  | Docker                   | Packaging for Debezium connector                    |
+
 ## What this is (and isn't)
 
 - **Is**: infrastructure for delivering vehicle telemetry and session data
@@ -23,6 +40,10 @@ product.
   [Orchestration](#orchestration)), not streamed to a live consumer.
   This was a deliberate choice — see
   [Why not real-time?](#why-not-real-time)
+- **Reasoning**: the synthetic data generated is completly randomized. Though
+  the dimensional data in some cases do make sense, the data involving time and
+  logged sensor values is completly random. This is the main limitation of my
+  system.
 
 ## Running this yourself
 See [Deployment Guide](deployment.md) for instructions to setup and execute the
@@ -93,7 +114,7 @@ and versioned in silver, and are modeled into a dimensional gold layer.
                dim_tracks
                track_id (PK)
 ```
-Checkout [Data Architecture](docs/DATA_MODEL.svg) for more details
+Checkout [Data Architecture](docs/DATA_MODEL.md) for more details
 
 Checkout [Schema Reference](docs/SCHEMEA_REFERENCE.md) for details about scheams
 
@@ -176,13 +197,11 @@ capture every intermediate change (including deletes) without expensive
 polling — that's necessary for reconstructing accurate SCD2 history in
 `dim_vehicles`, regardless of how often the data is consumed downstream.
 
-Low-latency delivery was cut early (see
-[decisions log](#decisions--simplifications)) along with the live
-dashboard it would have served. With no consumer reading gold within
-seconds of ingestion, running dbt continuously or keeping compute always
-on would add cost and complexity with no one benefiting from the
-freshness. Scheduled micro-batching gets the same correctness at a
-fraction of the operating cost.
+Low-latency delivery was cut early along with the live dashboard it would 
+have served. With no consumer reading gold withinseconds of ingestion, 
+running dbt continuously or keeping compute always on would add cost and 
+complexity with no one benefiting from the freshness. Scheduled micro-batching 
+gets the same correctness at a fraction of the operating cost.
 
 ## Testing
 
@@ -242,7 +261,10 @@ Documented here as deliberate simplifications, not oversights:
   Databricks places a one workspace limit and only support serverless compute.
 - **Batch ingested/processed rather than Live data.** This decision was made to
   keep costs low, and because the data gathered did not need to be ready 
-  immediately. The system created is more of OLAP purposes.
+  immediately. The system created is more of OLAP purposes. Additionally 
+  the fact that data is comepletly randomized, it is difficult to implement 
+  transformations to dectect certain events (like a sliding window for fraud 
+  detection or for this project predictive component maintenance/failure).
 - **CI/CD was scoped and cut.** Jobs are built by hand in the Databricks
   UI and exported to `docs/databricks_jobs.yml` for reproducibility, rather 
   than deployed via Asset Bundles and GitHub Actions. This was a consequence 
