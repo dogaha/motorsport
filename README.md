@@ -243,26 +243,73 @@ Documented here as deliberate simplifications, not oversights:
 - **Databricks is not deployed using Terraform.** The free trial version of 
   Databricks places a one workspace limit and only support serverless compute
 
-## Decisions & simplifications
+## Tradeoffs
 - **Original Plan simpliified.** Originally sensor records were supposed to be 
   streamed and batch ingested, however was simplified to only batch ingested
-  because streaming the data had no use due to my inability to think of a use
-  for them (did not want to use it just redundant data).
+  because streaming the data would require additional code to make the randomly
+  generated data to have "insights" within them. This would have added more time
+  to the project which i was not willing
 - **AWS infrastructure was not built with best security.** The cloud infra 
   created leaves alot to be desired from a role and security persepective. 
   This tradeoff was made because of the project being data engineering focused.
-- **Switched to confluent for kafka hosting.** This was due to the workspace
-  being serverless only. Additionally, confluent was just the more interesting
-  tool
 - **Databricks is not deployed using Terraform.** The free trial version of 
   Databricks places a one workspace limit and only support serverless compute.
+  Though i could have set it up with terraform using NCC and ElasticIP for EC2, 
+  I decided not to as, i wanted to get the project out faster.
+- **Switched to confluent for kafka hosting.** This was due to EC2 not being
+  able to talk to databricks, without a dedicated IP or dangerous cloud practices
+  (making gateway open to the internet). Additionally, confluent is simply a 
+  "pretty" tool.
 - **Batch ingested/processed rather than Live data.** This decision was made to
   keep costs low, and because the data gathered did not need to be ready 
   immediately. The system created is more of OLAP purposes. Additionally 
   the fact that data is comepletly randomized, it is difficult to implement 
   transformations to dectect certain events (like a sliding window for fraud 
   detection or for this project predictive component maintenance/failure).
-- **CI/CD was scoped and cut.** Jobs are built by hand in the Databricks
-  UI and exported to `docs/databricks_jobs.yml` for reproducibility, rather 
-  than deployed via Asset Bundles and GitHub Actions. This was a consequence 
-  of project burnout and time constraints
+- **CI/CD was scoped:** Honesstly this project had alot of new techs i have
+  never interacted with, including (AWS (EC2, RDS, VPC, IAM, S3), Databricks, 
+  Terraform, and Confluent Cloud (Kafka)). With so much to learn and cutting out
+  so much of what was planned i decided to cut out CI/CD to get the project out
+  as faster.
+
+## Mistakes and What I Would do Differently
+- **Data Generators:** During Development of the generators I decided that i
+  would manually create the schema and determine the errors with the generators
+  myself. Though i learned some things, like how to send files to S3, create
+  producers for kafka topics, and general development; Most of the time went to
+  debugging errors and planning.
+
+  **What i would do Differently:** I would outsource the data generation to an LLM.
+  This would have solved the main problem of my project, as I would have data
+  with some insights (I defaulted to randomized data becaus i did not want to 
+  create a physics engine for accurate motorsport data). Along with saving time 
+  in development, it would have made the project more "professional", 
+  as i would not have known what the data looked like and would have to create
+  a plan from what i see and not what i designed.
+
+- **CI/CD:** During development i was under the impression that CI/CD was really
+  only used for deployment of terraform infrastrucutre and projects that
+  somewhat already works, however i was completly wrong. I later found out that 
+  it automates development testing, which would have been useful for my project 
+  as i spent alot of time testing and debugging (mainly new EC2 Bootups).
+
+  **What i would do Differently:** I would learn and use CI/CD from the start.
+
+- **Real Time Streaming:** During the development of the databricks ingestion
+  layer, i realized that i may have been too ambitious/lax about how good a 
+  random data generator was for my project. As i realized that Streaming data
+  is really only used for things that need immediate attention to like
+  transactions over a time window or in this case dangerous sensor readings that 
+  appear over a time window.
+
+  **What i would do Differently:** As statebefore the data generators was the
+  main limiting factor to this project, so fixing that would have made it alot
+  easier for development.
+
+  **Data Engineering Concepts:** With so many new tools to use, i failed 
+  consider some data engineering concepts including: Data Qualtiy, Data 
+  Govenrnace, and Data Security.
+
+  **What i would do Differently:** I would, put more emphasis on these topics
+  at the start of the project. Considering these topics during the planning
+  phase would have made development alot less chaotic and easier.
