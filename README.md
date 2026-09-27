@@ -169,10 +169,7 @@ boundaries. All other dims are SCD1 (latest state).
 6 databrick task branches that run in parrallel (one for each table), 
 one schedule:
 
-```
-ingest_cdc_*     → process_cdc_*       |→ dbt build
-ingest_telemetry → process_telemetry   |  
-```
+![databricks_jobs.png](docs/databricks_jobs.png)
 
 - **Schedule:** every 15 minutes (cron).
 - **Max concurrent runs:** 1, queueing off — an overrunning tick is
